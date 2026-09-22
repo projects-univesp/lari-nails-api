@@ -1,0 +1,30 @@
+import {
+  IsString,
+  IsNotEmpty,
+  MaxLength,
+  IsOptional,
+  IsInt,
+  Min,
+} from 'class-validator';
+
+export class CreateClientDto {
+  @IsString()
+  @IsNotEmpty({ message: 'O nome é obrigatório' })
+  @MaxLength(120, { message: 'O nome deve ter no máximo 120 caracteres' })
+  nome!: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'O telefone é obrigatório' })
+  @MaxLength(20, { message: 'O telefone deve ter no máximo 20 caracteres' })
+  telefone!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20, { message: 'O status deve ter no máximo 20 caracteres' })
+  status?: string;
+
+  @IsOptional()
+  @IsInt({ message: 'O total de faltas deve ser um número inteiro' })
+  @Min(0, { message: 'O total de faltas não pode ser negativo' })
+  totalFaltas?: number;
+}

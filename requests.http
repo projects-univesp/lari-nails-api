@@ -1,0 +1,121 @@
+@baseUrl = http://localhost:3000
+
+### 1. Health Check (Verificação de saúde da API)
+GET {{baseUrl}}/health
+
+### ============================================================
+### AUTENTICAÇÃO E SETUP INICIAL (/auth)
+### ============================================================
+
+### Verificar status do setup inicial
+GET {{baseUrl}}/auth/setup-status
+
+### Realizar setup inicial (Criação do primeiro Administrador)
+POST {{baseUrl}}/auth/setup
+Content-Type: application/json
+
+{
+  "nome": "Administrador",
+  "email": "admin@larinails.com",
+  "senha": "Admin@Password123"
+}
+
+### Login no sistema (Gera o cookie HTTP-only access_token)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@larinails.com",
+  "senha": "Admin@Password123"
+}
+
+### Obter perfil do usuário autenticado atual (/auth/me)
+GET {{baseUrl}}/auth/me
+
+### Logout (Encerra a sessão e limpa o cookie)
+POST {{baseUrl}}/auth/logout
+
+### ============================================================
+### GESTÃO DE USUÁRIOS (/users)
+### ============================================================
+
+### Listar todos os usuários (Requer role Admin)
+GET {{baseUrl}}/users
+
+### Criar novo usuário (Requer role Admin)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "nome": "Funcionario Exemplo",
+  "email": "funcionario@larinails.com",
+  "senha": "User@Password123",
+  "role": "user"
+}
+
+### Buscar usuário por ID
+# Substitua o ID pelo UUID do usuário criado
+GET {{baseUrl}}/users/a0342504-9ef7-4387-9880-b9b8152bc14a
+
+### Atualizar usuário por ID
+PATCH {{baseUrl}}/users/a0342504-9ef7-4387-9880-b9b8152bc14a
+Content-Type: application/json
+
+{
+  "nome": "Funcionario Atualizado",
+  "email": "novoemail@larinails.com"
+}
+
+### Deletar usuário por ID (Soft delete)
+DELETE {{baseUrl}}/users/a0342504-9ef7-4387-9880-b9b8152bc14a
+
+### Restaurar usuário desativado
+PATCH {{baseUrl}}/users/a0342504-9ef7-4387-9880-b9b8152bc14a/restore
+
+### ============================================================
+### GESTÃO DE CLIENTES (/clients)
+### ============================================================
+
+### Criar um Cliente
+POST {{baseUrl}}/clients
+Content-Type: application/json
+
+{
+  "nome": "Maria da Silva",
+  "telefone": "(11) 98765-4321",
+  "status": "ativo",
+  "totalFaltas": 0
+}
+
+### Listar todos os Clientes
+GET {{baseUrl}}/clients
+
+### Buscar Cliente por ID
+# Substitua o UUID abaixo por um que você criou
+GET {{baseUrl}}/clients/a0342504-9ef7-4387-9880-b9b8152bc14a
+
+### Atualizar Cliente por ID
+PATCH {{baseUrl}}/clients/a0342504-9ef7-4387-9880-b9b8152bc14a
+Content-Type: application/json
+
+{
+  "nome": "Maria da Silva Atualizada",
+  "telefone": "(11) 91234-5678",
+  "status": "ativo"
+}
+
+### Restaurar Cliente por ID
+PATCH {{baseUrl}}/clients/a0342504-9ef7-4387-9880-b9b8152bc14a/restore
+
+### Deletar Cliente por ID (Soft delete)
+DELETE {{baseUrl}}/clients/a0342504-9ef7-4387-9880-b9b8152bc14a
+
+### Testar erro de validação (Campos obrigatórios ausentes)
+POST {{baseUrl}}/clients
+Content-Type: application/json
+
+{
+  "nome": "",
+  "telefone": ""
+}
