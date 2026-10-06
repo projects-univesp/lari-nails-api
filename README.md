@@ -58,6 +58,62 @@ A infraestrutura compartilhada inclui:
 | `PATCH` | `/clients/:id/restore` | Autenticado | Restaura um cliente desativado |
 | `DELETE` | `/clients/:id` | Autenticado | Realiza exclusão lógica (soft delete) do cliente |
 
+### 5. Catálogo de Serviços (`/services`)
+| Método | Endpoint | Acesso | Descrição |
+|---|---|---|---|
+| `POST` | `/services` | Admin | Cadastra serviço com `name`, `category`, `priceCents`, `durationMinutes`, `description?` e `active?` |
+| `GET` | `/services?active=true` | Autenticado | Lista serviços; filtro `active=true` ou `false` é opcional |
+| `GET` | `/services/:id` | Autenticado | Consulta serviço por UUID |
+| `PATCH` | `/services/:id` | Admin | Atualiza campos do serviço; `active=false` retira o serviço do catálogo disponível |
+
+O preço é armazenado em centavos inteiros e a duração em minutos inteiros (de 1 a 1440). A rota de listagem sem filtro retorna serviços ativos e inativos para permitir sua administração. Aplique a migração antes de usar o catálogo: `npm run prisma:migrate:deploy`.
+
+### 6. Expediente, bloqueios e disponibilidade
+| Método | Endpoint | Acesso | Descrição |
+|---|---|---|---|
+| `GET` | `/business-hours` | Autenticado | Retorna os sete dias do expediente semanal |
+| `PUT` | `/business-hours` | Admin | Substitui os sete dias em uma transação |
+| `GET` | `/agenda-blocks?from=YYYY-MM-DD&to=YYYY-MM-DD` | Autenticado | Lista bloqueios no intervalo inclusivo |
+| `POST` | `/agenda-blocks` | Admin | Cria bloqueio com `reason`, `date`, `startTime` e `endTime` |
+| `PATCH` | `/agenda-blocks/:id` | Admin | Atualiza o bloqueio |
+| `DELETE` | `/agenda-blocks/:id` | Admin | Exclui o bloqueio |
+| `GET` | `/availability?serviceId=UUID&from=YYYY-MM-DD&to=YYYY-MM-DD` | Autenticado | Lista vagas para serviço ativo em até 31 dias |
+
+Em `business-hours`, cada dia tem `dayOfWeek` (0 = domingo a 6 = sábado), `isOpen`, `openTime`, `closeTime`, `lunchStart` e `lunchEnd`. Horários usam `HH:mm` no fuso `America/Sao_Paulo`; campos de horário podem ser `null` nos dias fechados. A disponibilidade devolve `{ date, startTime, endTime }` para cada vaga futura em passos de 30 minutos, considerando duração do serviço, expediente, almoço, bloqueios e agendamentos ativos. Nenhuma vaga é oferecida antes que o expediente seja salvo.
+
+### 7. Agendamentos e aprovação (`/appointments`)
+| Método | Endpoint | Acesso | Descrição |
+|---|---|---|---|
+| `POST` | `/appointments` | Autenticado | Cria pedido `AGUARDANDO` com `clientId`, `serviceId`, `requestedDate`, `requestedTime` e `source` (`MANUAL` ou `WHATSAPP_BOT`) |
+| `GET` | `/appointments?from=YYYY-MM-DD&to=YYYY-MM-DD&status=AGUARDANDO` | Autenticado | Lista pedidos em até 31 dias; `status` é opcional |
+| `GET` | `/appointments/pending` | Autenticado | Lista até 100 pedidos aguardando aprovação, em ordem de data e horário |
+| `GET` | `/appointments/:id` | Autenticado | Consulta um pedido |
+| `GET` | `/appointments/:id/history` | Autenticado | Consulta o histórico de criação e decisão |
+| `POST` | `/appointments/:id/status` | Admin | Decide pedido com `status` (`CONFIRMADO`, `CANCELADO` ou `REAGENDAMENTO_SUGERIDO`), `reason?`, `proposedDate?` e `proposedTime?` |
+
+`CANCELADO` exige `reason`; `REAGENDAMENTO_SUGERIDO` exige data e horário novos. A API grava o ator autenticado e o evento de histórico na mesma transação da decisão. `AGUARDANDO` e `CONFIRMADO` ocupam o intervalo no banco; pedidos pendentes permanecem ocupando até a decisão, sem expiração automática nesta etapa. A restrição de exclusão do PostgreSQL impede reservas sobrepostas mesmo sob requisições simultâneas. Uma sugestão libera o intervalo original e **não reserva** o horário proposto: ele será conferido novamente antes de uma futura aceitação pela cliente. As respostas usam datas locais `YYYY-MM-DD` e horários `HH:mm` de São Paulo.
+
+### 8. Integração de automações (`/automation`)
+
+As rotas abaixo exigem `X-Automation-Key` com a chave definida em `AUTOMATION_API_KEY` (mínimo de 32 caracteres). Elas não aceitam o cookie ou token de uma sessão humana.
+
+As rotas de automação são destinadas a integrações externas autenticadas por `X-Automation-Key`; o backend não depende de um provedor de mensagens específico.
+
+| Método | Endpoint | Uso |
+|---|---|---|
+| `GET` | `/automation/services` | Serviços ativos para o bot |
+| `GET` | `/automation/business-hours` | Expediente semanal |
+| `GET` | `/automation/availability?serviceId=UUID&from=YYYY-MM-DD&to=YYYY-MM-DD` | Vagas reais |
+| `POST` | `/automation/clients/resolve` | Encontra ou cria cliente por telefone brasileiro, aceitando JID `@s.whatsapp.net` |
+| `GET` | `/automation/clients/:id` | Dados do cliente para a mensagem |
+| `POST` | `/automation/appointments` | Cria pedido com origem fixa `WHATSAPP_BOT` |
+| `GET` | `/automation/appointments/:id` | Consulta pedido |
+| `POST` | `/automation/events/verify` | Verifica assinatura e prazo de evento externo recebido pela integração |
+
+`clients/resolve` recebe `{ "nome": "...", "telefone": "..." }` e retorna `{ client, created }`. Telefones locais, internacionais e JIDs equivalentes recebem a mesma chave. A migração preserva cadastros legados duplicados sem uni-los; uma tentativa de resolver um desses telefones retorna conflito para revisão manual.
+
+Cada decisão de agendamento grava `appointment.status_changed` na tabela `eventos_automacao` na mesma transação. Quando `AUTOMATION_EVENT_WEBHOOK_URL` e `AUTOMATION_EVENT_WEBHOOK_SECRET` (mínimo de 32 caracteres) estão definidos, a API entrega o evento por HTTP com retentativas e o mesmo ID. O corpo inclui `id`, `type`, `aggregateId`, `payload` e `createdAt`. `X-Lari-Signature` contém HMAC-SHA256 de `X-Lari-Timestamp + "." + corpo JSON`; `X-Lari-Webhook-Key` autentica o receptor configurado. A entrega é pelo menos uma vez: o receptor deve tratar repetições pelo ID do evento. Configure a URL receptora em HTTPS.
+
 ---
 
 ## ⚙️ Executando o Projeto
@@ -77,6 +133,7 @@ Copie o arquivo de exemplo:
 cp .env.example .env
 ```
 Edite o arquivo `.env` para ajustar senhas e a chave `JWT_SECRET`.
+Defina `CORS_ORIGIN` com a origem publicada da interface. Caso haja mais de uma origem, separe-as por vírgula. A sessão usa cookie HTTP-only.
 
 ### 3. Rodar as Migrações do Banco
 ```bash

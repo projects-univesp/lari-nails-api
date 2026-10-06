@@ -10,6 +10,8 @@ import { DeleteClientUseCase } from './application/delete.client.usecase';
 
 import { UpdateClientUseCase } from './application/update.client.usecase';
 import { RestoreClientUseCase } from './application/restore.client.usecase';
+import { ResolveAutomationClientUseCase } from './application/resolve-automation-client.usecase';
+import { IClientPhoneRepository } from './domain/client-phone.repository.interface';
 
 @Module({
   imports: [DatabaseModule],
@@ -18,6 +20,13 @@ import { RestoreClientUseCase } from './application/restore.client.usecase';
     {
       provide: 'IClientRepository',
       useClass: PrismaClientRepository,
+    },
+    { provide: 'IClientPhoneRepository', useExisting: 'IClientRepository' },
+    {
+      provide: ResolveAutomationClientUseCase,
+      useFactory: (repo: IClientPhoneRepository) =>
+        new ResolveAutomationClientUseCase(repo),
+      inject: ['IClientPhoneRepository'],
     },
     {
       provide: CreateClientUseCase,
@@ -50,5 +59,6 @@ import { RestoreClientUseCase } from './application/restore.client.usecase';
       inject: ['IClientRepository'],
     },
   ],
+  exports: [FindClientUseCase, ResolveAutomationClientUseCase],
 })
 export class ClientModule {}

@@ -11,11 +11,13 @@ model ClientModel {
   id           String   @id @default(uuid())
   nome         String   @db.VarChar(120)
   telefone     String   @db.VarChar(20)
+  normalizedPhone String? @unique @map("normalized_phone") @db.VarChar(13)
   status       String   @default("ativo") @db.VarChar(20)
   totalFaltas  Int      @default(0) @map("total_faltas")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
   deletedAt    DateTime? @map("deleted_at")
+  appointments AppointmentModel[]
 
   @@map("clientes")
 }
@@ -31,4 +33,105 @@ model UserModel {
   deletedAt DateTime? @map("deleted_at")
 
   @@map("usuarios")
+}
+
+model ServiceModel {
+  id              String    @id @default(uuid())
+  name            String    @db.VarChar(120)
+  category        String    @db.VarChar(80)
+  description     String?   @db.Text
+  priceCents      Int       @map("price_cents")
+  durationMinutes Int       @map("duration_minutes")
+  active          Boolean   @default(true)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  appointments    AppointmentModel[]
+
+  @@index([active, name])
+  @@map("servicos")
+}
+
+model BusinessHoursModel {
+  dayOfWeek  Int      @id @map("day_of_week")
+  isOpen     Boolean  @default(false) @map("is_open")
+  openTime   String?  @map("open_time") @db.VarChar(5)
+  closeTime  String?  @map("close_time") @db.VarChar(5)
+  lunchStart String?  @map("lunch_start") @db.VarChar(5)
+  lunchEnd   String?  @map("lunch_end") @db.VarChar(5)
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("horarios_funcionamento")
+}
+
+model AgendaBlockModel {
+  id        String   @id @default(uuid())
+  reason    String   @db.VarChar(120)
+  date      DateTime @db.Date
+  startTime String   @map("start_time") @db.VarChar(5)
+  endTime   String   @map("end_time") @db.VarChar(5)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([date, startTime])
+  @@map("bloqueios_agenda")
+}
+
+model AppointmentModel {
+  id              String    @id @default(uuid())
+  clientId        String    @map("client_id")
+  serviceId       String    @map("service_id")
+  requestedDate   DateTime  @map("requested_date") @db.Date
+  requestedTime   String    @map("requested_time") @db.VarChar(5)
+  endTime         String    @map("end_time") @db.VarChar(5)
+  startAt         DateTime  @map("start_at") @db.Timestamp(3)
+  endAt           DateTime  @map("end_at") @db.Timestamp(3)
+  durationMinutes Int       @map("duration_minutes")
+  priceCents      Int       @map("price_cents")
+  source          String    @db.VarChar(20)
+  status          String    @default("AGUARDANDO") @db.VarChar(30)
+  denialReason    String?   @map("denial_reason") @db.VarChar(500)
+  proposedDate    DateTime? @map("proposed_date") @db.Date
+  proposedTime    String?   @map("proposed_time") @db.VarChar(5)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  client          ClientModel @relation(fields: [clientId], references: [id])
+  service         ServiceModel @relation(fields: [serviceId], references: [id])
+  history         AppointmentStatusEventModel[]
+
+  @@index([requestedDate, status])
+  @@index([clientId, requestedDate])
+  @@map("agendamentos")
+}
+
+model AppointmentStatusEventModel {
+  id            String   @id @default(uuid())
+  appointmentId String   @map("appointment_id")
+  fromStatus    String?  @map("from_status") @db.VarChar(30)
+  toStatus      String   @map("to_status") @db.VarChar(30)
+  actorType     String   @map("actor_type") @db.VarChar(20)
+  actorId       String?  @map("actor_id")
+  reason        String?  @db.VarChar(500)
+  proposedDate  DateTime? @map("proposed_date") @db.Date
+  proposedTime  String?  @map("proposed_time") @db.VarChar(5)
+  occurredAt    DateTime @default(now()) @map("occurred_at")
+  appointment   AppointmentModel @relation(fields: [appointmentId], references: [id])
+
+  @@index([appointmentId, occurredAt])
+  @@map("historico_status_agendamento")
+}
+
+model AutomationEventModel {
+  id            String    @id @default(uuid())
+  type          String    @db.VarChar(80)
+  aggregateId   String    @map("aggregate_id")
+  payload       Json
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @default(now()) @map("next_attempt_at")
+  lockedUntil   DateTime? @map("locked_until")
+  deliveredAt   DateTime? @map("delivered_at")
+  lastError     String?   @map("last_error") @db.VarChar(500)
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([deliveredAt, nextAttemptAt])
+  @@map("eventos_automacao")
 }

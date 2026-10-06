@@ -4,6 +4,7 @@ import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard, ACCESS_TOKEN_COOKIE } from './auth.guard';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { IS_AUTOMATION_KEY } from '../decorators/automation.decorator';
 
 describe('AuthGuard', () => {
   let guard: AuthGuard;
@@ -17,6 +18,43 @@ describe('AuthGuard', () => {
     } as unknown as jest.Mocked<JwtService>;
 
     guard = new AuthGuard(reflector, jwtService);
+  });
+
+  it('aceita apenas a chave própria nas rotas de automação', async () => {
+    const key = 'a'.repeat(40);
+    process.env.AUTOMATION_API_KEY = key;
+    jest
+      .spyOn(reflector, 'getAllAndOverride')
+      .mockImplementation((name) => name === IS_AUTOMATION_KEY);
+    const request: {
+      header: jest.Mock;
+      cookies: Record<string, string>;
+      headers: Record<string, string>;
+      user?: unknown;
+    } = {
+      header: jest.fn().mockReturnValue(key),
+      cookies: { access_token: 'human-token' },
+      headers: {},
+    };
+    const context = {
+      getHandler: jest.fn(),
+      getClass: jest.fn(),
+      switchToHttp: jest.fn().mockReturnValue({ getRequest: () => request }),
+    } as unknown as ExecutionContext;
+    try {
+      await expect(guard.canActivate(context)).resolves.toBe(true);
+      expect(request.user).toEqual({
+        sub: 'automation:n8n',
+        role: 'automation',
+      });
+      request.header.mockReturnValue('incorrect-key');
+      await expect(guard.canActivate(context)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(jwtService.verifyAsync).not.toHaveBeenCalled();
+    } finally {
+      delete process.env.AUTOMATION_API_KEY;
+    }
   });
 
   it('deve permitir acesso quando a rota for marcada como @Public', async () => {

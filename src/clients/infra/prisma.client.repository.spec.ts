@@ -13,6 +13,8 @@ describe('PrismaClientRepository', () => {
       findFirst: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
+      create: jest.fn(),
     },
   };
 
@@ -33,6 +35,7 @@ describe('PrismaClientRepository', () => {
   it('deve salvar um cliente usando upsert', async () => {
     const client = new Client('Maria da Silva', '(11) 98765-4321');
     mockPrismaService.clientModel.upsert.mockResolvedValue({});
+    mockPrismaService.clientModel.findMany.mockResolvedValue([]);
 
     await repository.save(client);
 
@@ -42,6 +45,7 @@ describe('PrismaClientRepository', () => {
         id: client.getId(),
         nome: client.getNome(),
         telefone: client.getTelefone(),
+        normalizedPhone: '5511987654321',
         status: client.getStatus(),
         totalFaltas: client.getTotalFaltas(),
         createdAt: client.getCreatedAt(),
@@ -51,6 +55,7 @@ describe('PrismaClientRepository', () => {
       update: {
         nome: client.getNome(),
         telefone: client.getTelefone(),
+        normalizedPhone: '5511987654321',
         status: client.getStatus(),
         totalFaltas: client.getTotalFaltas(),
         updatedAt: client.getUpdatedAt(),
@@ -79,6 +84,49 @@ describe('PrismaClientRepository', () => {
     expect(client).not.toBeNull();
     expect(client?.getId()).toBe(customId);
     expect(client?.getNome()).toBe('Maria da Silva');
+  });
+
+  it('reusa cadastro legado pelo JID e ocupa a chave normalizada', async () => {
+    const raw = {
+      id: 'dabea031-504f-43b6-86d0-8c1b843ef8e4',
+      nome: 'Maria',
+      telefone: '(11) 98765-4321',
+      normalizedPhone: null,
+      status: 'ativo',
+      totalFaltas: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+    };
+    mockPrismaService.clientModel.findMany.mockResolvedValue([raw]);
+    mockPrismaService.clientModel.updateMany.mockResolvedValue({ count: 1 });
+
+    const result = await repository.resolvePhone(
+      'Outro nome',
+      '5511987654321@s.whatsapp.net',
+    );
+
+    expect(result.created).toBe(false);
+    expect(result.client.getId()).toBe(raw.id);
+    expect(mockPrismaService.clientModel.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: raw.id,
+        telefone: raw.telefone,
+        normalizedPhone: null,
+        deletedAt: null,
+      },
+      data: { normalizedPhone: '5511987654321' },
+    });
+  });
+
+  it('não escolhe arbitrariamente entre cadastros legados duplicados', async () => {
+    mockPrismaService.clientModel.findMany.mockResolvedValue([
+      { id: 'one', telefone: '(11) 98765-4321' },
+      { id: 'two', telefone: '+55 11 98765-4321' },
+    ]);
+    await expect(
+      repository.resolvePhone('Maria', '5511987654321'),
+    ).rejects.toThrow('Há clientes duplicados');
   });
 
   it('deve retornar null se cliente nao for encontrado', async () => {
@@ -123,7 +171,7 @@ describe('PrismaClientRepository', () => {
 
     expect(mockPrismaService.clientModel.update).toHaveBeenCalledWith({
       where: { id: customId },
-      data: { deletedAt: expect.any(Date) },
+      data: { deletedAt: expect.any(Date), normalizedPhone: null },
     });
   });
 });

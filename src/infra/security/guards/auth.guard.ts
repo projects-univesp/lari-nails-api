@@ -7,7 +7,9 @@ import {
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+import { createHash, timingSafeEqual } from 'crypto';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { IS_AUTOMATION_KEY } from '../decorators/automation.decorator';
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
 
@@ -38,6 +40,24 @@ export class AuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<Request>();
+    const isAutomation = this.reflector.getAllAndOverride<boolean>(
+      IS_AUTOMATION_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    if (isAutomation) {
+      const configured = process.env.AUTOMATION_API_KEY;
+      const supplied = request.header('x-automation-key');
+      if (!configured || !supplied || configured.length < 32) {
+        throw new UnauthorizedException('Credencial de automação inválida');
+      }
+      const expected = createHash('sha256').update(configured).digest();
+      const actual = createHash('sha256').update(supplied).digest();
+      if (!timingSafeEqual(expected, actual)) {
+        throw new UnauthorizedException('Credencial de automação inválida');
+      }
+      request.user = { sub: 'automation:n8n', role: 'automation' };
+      return true;
+    }
     const token = this.extractToken(request);
 
     if (!token) {

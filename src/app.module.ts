@@ -4,6 +4,10 @@ import { SecurityModule } from './infra/security/security.module';
 import { HttpModule } from './infra/http/http.module';
 import { ClientModule } from './clients/client.module';
 import { UsersModule } from './users/users.module';
+import { ServiceModule } from './services/service.module';
+import { AgendaModule } from './agenda/agenda.module';
+import { AppointmentModule } from './appointments/appointment.module';
+import { AutomationModule } from './automation/automation.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -13,6 +17,10 @@ import { AppController } from './app.controller';
     HttpModule,
     ClientModule,
     UsersModule,
+    ServiceModule,
+    AgendaModule,
+    AppointmentModule,
+    AutomationModule,
   ],
   controllers: [AppController],
 })

@@ -31,6 +31,11 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-3000}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
+      AUTOMATION_API_KEY: ${AUTOMATION_API_KEY:-}
+      AUTOMATION_EVENT_WEBHOOK_URL: ${AUTOMATION_EVENT_WEBHOOK_URL:-}
+      AUTOMATION_EVENT_WEBHOOK_SECRET: ${AUTOMATION_EVENT_WEBHOOK_SECRET:-}
       DATABASE_URL: ${DOCKER_DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-lari_nails_db}?schema=public}
     depends_on:
       postgres:
