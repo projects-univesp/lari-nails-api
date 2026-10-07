@@ -2,7 +2,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { ServiceModule } from '../src/services/service.module';
+import { CatalogModule } from '../src/catalog/catalog.module';
 import { PrismaService } from '../src/infra/database/prisma.service';
 
 interface StoredService {
@@ -17,14 +17,14 @@ interface StoredService {
   updatedAt: Date;
 }
 
-describe('ServiceController (e2e)', () => {
+describe('CatalogItemController (e2e)', () => {
   let app: INestApplication<App>;
   const records = new Map<string, StoredService>();
 
   const prisma = {
     $connect: jest.fn(),
     $disconnect: jest.fn(),
-    serviceModel: {
+    catalogItemModel: {
       upsert: jest.fn(
         (args: {
           where: { id: string };
@@ -54,7 +54,7 @@ describe('ServiceController (e2e)', () => {
   };
 
   beforeAll(async () => {
-    const module = await Test.createTestingModule({ imports: [ServiceModule] })
+    const module = await Test.createTestingModule({ imports: [CatalogModule] })
       .overrideProvider(PrismaService)
       .useValue(prisma)
       .compile();
@@ -75,7 +75,7 @@ describe('ServiceController (e2e)', () => {
 
   it('cadastra, lista, filtra e atualiza o serviço', async () => {
     const created = await request(app.getHttpServer())
-      .post('/services')
+      .post('/catalog')
       .send({
         name: 'Manicure',
         category: 'Mãos',
@@ -92,12 +92,12 @@ describe('ServiceController (e2e)', () => {
     });
 
     const listed = await request(app.getHttpServer())
-      .get('/services?active=true')
+      .get('/catalog?active=true')
       .expect(200);
     expect(listed.body).toHaveLength(1);
 
     const updated = await request(app.getHttpServer())
-      .patch(`/services/${id}`)
+      .patch(`/catalog/${id}`)
       .send({
         priceCents: 5000,
         active: false,
@@ -114,19 +114,19 @@ describe('ServiceController (e2e)', () => {
     expect(
       (
         await request(app.getHttpServer())
-          .get('/services?active=true')
+          .get('/catalog?active=true')
           .expect(200)
       ).body,
     ).toHaveLength(0);
     expect(
       (
         await request(app.getHttpServer())
-          .get('/services?active=false')
+          .get('/catalog?active=false')
           .expect(200)
       ).body,
     ).toHaveLength(1);
     expect(
-      (await request(app.getHttpServer()).get(`/services/${id}`).expect(200))
+      (await request(app.getHttpServer()).get(`/catalog/${id}`).expect(200))
         .body,
     ).toMatchObject({ priceCents: 5000 });
   });
@@ -134,11 +134,11 @@ describe('ServiceController (e2e)', () => {
   it('rejeita preço e duração inválidos sem alterar o registro', async () => {
     const id = [...records.keys()][0];
     await request(app.getHttpServer())
-      .patch(`/services/${id}`)
+      .patch(`/catalog/${id}`)
       .send({ name: 'Alterado', priceCents: -1 })
       .expect(400);
     await request(app.getHttpServer())
-      .patch(`/services/${id}`)
+      .patch(`/catalog/${id}`)
       .send({ durationMinutes: 0 })
       .expect(400);
     expect(records.get(id)?.name).toBe('Manicure');
@@ -146,7 +146,7 @@ describe('ServiceController (e2e)', () => {
 
   it('rejeita campos inesperados e retorna 404 para serviço ausente', async () => {
     await request(app.getHttpServer())
-      .post('/services')
+      .post('/catalog')
       .send({
         name: 'Pedicure',
         category: 'Pés',
@@ -156,7 +156,7 @@ describe('ServiceController (e2e)', () => {
       })
       .expect(400);
     await request(app.getHttpServer())
-      .get('/services/2cd35d92-45bb-4470-bec6-e4b0aaf50142')
+      .get('/catalog/2cd35d92-45bb-4470-bec6-e4b0aaf50142')
       .expect(404);
   });
 });

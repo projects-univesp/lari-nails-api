@@ -1,6 +1,6 @@
-import { Service, ServiceValidationError } from './service.entity';
+import { CatalogItem, CatalogItemValidationError } from './catalog-item.entity';
 
-describe('Service Entity', () => {
+describe('CatalogItem Entity', () => {
   const data = {
     name: 'Manicure',
     category: 'Mãos',
@@ -9,7 +9,7 @@ describe('Service Entity', () => {
   };
 
   it('cria serviço ativo e atualiza preço e duração sem perder os outros dados', () => {
-    const original = new Service(data);
+    const original = new CatalogItem(data);
     const updated = original.update({
       priceCents: 5000,
       durationMinutes: 75,
@@ -26,18 +26,18 @@ describe('Service Entity', () => {
   });
 
   it('rejeita valores inválidos mesmo sem passar pelo DTO HTTP', () => {
-    expect(() => new Service({ ...data, priceCents: 4.5 })).toThrow(
-      ServiceValidationError,
+    expect(() => new CatalogItem({ ...data, priceCents: 4.5 })).toThrow(
+      CatalogItemValidationError,
     );
-    expect(() => new Service({ ...data, durationMinutes: 0 })).toThrow(
-      ServiceValidationError,
+    expect(() => new CatalogItem({ ...data, durationMinutes: 0 })).toThrow(
+      CatalogItemValidationError,
     );
-    expect(() => new Service({ ...data, name: '  ' })).toThrow(
-      ServiceValidationError,
+    expect(() => new CatalogItem({ ...data, name: '  ' })).toThrow(
+      CatalogItemValidationError,
     );
-    const service = new Service(data);
+    const service = new CatalogItem(data);
     expect(() => service.update({ durationMinutes: 1441 })).toThrow(
-      ServiceValidationError,
+      CatalogItemValidationError,
     );
     expect(service.durationMinutes).toBe(60);
   });

@@ -1,7 +1,7 @@
-import { Service } from '../../domain/service.entity';
+import { CatalogItem } from '../../domain/catalog-item.entity';
 
-export class ServicePresenter {
-  static toHTTP(service: Service) {
+export class CatalogItemPresenter {
+  static toHTTP(service: CatalogItem) {
     return {
       id: service.id,
       name: service.name,

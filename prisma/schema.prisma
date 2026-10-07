@@ -45,7 +45,7 @@ model UserModel {
   @@map("usuarios")
 }
 
-model ServiceModel {
+model CatalogItemModel {
   id              String    @id @default(uuid())
   name            String    @db.VarChar(120)
   category        String    @db.VarChar(80)
@@ -58,7 +58,7 @@ model ServiceModel {
   appointments    AppointmentModel[]
 
   @@index([active, name])
-  @@map("servicos")
+  @@map("itens_catalogo")
 }
 
 model BusinessHoursModel {
@@ -105,7 +105,7 @@ model AppointmentModel {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
   client          ClientModel @relation(fields: [clientId], references: [id])
-  service         ServiceModel @relation(fields: [serviceId], references: [id])
+  service         CatalogItemModel @relation(fields: [serviceId], references: [id])
   history         AppointmentStatusEventModel[]
   payment         PaymentModel?
 

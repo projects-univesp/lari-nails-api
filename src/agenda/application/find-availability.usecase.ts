@@ -1,5 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
-import { FindServiceUseCase } from '../../services/application/find.service.usecase';
+import { FindCatalogItemUseCase } from '../../catalog/application/find.catalog-item.usecase';
 import {
   AgendaValidationError,
   assertDate,
@@ -17,7 +17,7 @@ export interface AvailableSlot {
 export class FindAvailabilityUseCase {
   constructor(
     private readonly repository: IAgendaRepository,
-    private readonly findService: FindServiceUseCase,
+    private readonly findService: FindCatalogItemUseCase,
   ) {}
 
   async execute(

@@ -6,8 +6,8 @@ import { randomUUID } from 'crypto';
 import { AgendaModule } from '../src/agenda/agenda.module';
 import { BusinessHours, AgendaBlock } from '../src/agenda/domain/agenda.rules';
 import { PrismaService } from '../src/infra/database/prisma.service';
-import { FindServiceUseCase } from '../src/services/application/find.service.usecase';
-import { Service } from '../src/services/domain/service.entity';
+import { FindCatalogItemUseCase } from '../src/catalog/application/find.catalog-item.usecase';
+import { CatalogItem } from '../src/catalog/domain/catalog-item.entity';
 
 describe('AgendaController (e2e)', () => {
   let app: INestApplication<App>;
@@ -20,7 +20,7 @@ describe('AgendaController (e2e)', () => {
     lunchEnd: null,
   }));
   const blocks = new Map<string, AgendaBlock>();
-  const service = new Service({
+  const service = new CatalogItem({
     name: 'Manicure',
     category: 'Mãos',
     priceCents: 4500,
@@ -77,7 +77,7 @@ describe('AgendaController (e2e)', () => {
       .useValue({ $connect: jest.fn(), $disconnect: jest.fn() })
       .overrideProvider('IAgendaRepository')
       .useValue(repository)
-      .overrideProvider(FindServiceUseCase)
+      .overrideProvider(FindCatalogItemUseCase)
       .useValue({ execute: jest.fn().mockResolvedValue(service) })
       .compile();
     app = module.createNestApplication();
