@@ -15,21 +15,56 @@ import { IClientPhoneRepository } from './domain/client-phone.repository.interfa
 import { FindClientHistoryUseCase } from './application/find-client-history.usecase';
 import { PrismaClientHistoryRepository } from './infra/prisma.client-history.repository';
 import { ClientTagsController } from './presentation/client-tags.controller';
-import { ClientTagRepository } from './infra/client-tag.repository';
+import { PrismaClientTagRepository } from './infra/prisma.client-tag.repository';
+import type { IClientTagRepository } from './domain/client-tag.repository.interface';
+import {
+  CreateClientTagUseCase,
+  DeleteClientTagUseCase,
+  ListClientTagsUseCase,
+} from './application/client-tag.usecase';
 import type { IClientHistoryRepository } from './domain/client-history.repository.interface';
 
 @Module({
   imports: [DatabaseModule],
   controllers: [ClientController, ClientTagsController],
   providers: [
-    ClientTagRepository,
+    {
+      provide: 'IClientTagRepository',
+      useClass: PrismaClientTagRepository,
+    },
+    {
+      provide: ListClientTagsUseCase,
+      useFactory: (repo: IClientTagRepository) =>
+        new ListClientTagsUseCase(repo),
+      inject: ['IClientTagRepository'],
+    },
+    {
+      provide: CreateClientTagUseCase,
+      useFactory: (repo: IClientTagRepository) =>
+        new CreateClientTagUseCase(repo),
+      inject: ['IClientTagRepository'],
+    },
+    {
+      provide: DeleteClientTagUseCase,
+      useFactory: (repo: IClientTagRepository) =>
+        new DeleteClientTagUseCase(repo),
+      inject: ['IClientTagRepository'],
+    },
     {
       provide: 'IClientRepository',
       useClass: PrismaClientRepository,
     },
     { provide: 'IClientPhoneRepository', useExisting: 'IClientRepository' },
-    { provide: 'IClientHistoryRepository', useClass: PrismaClientHistoryRepository },
-    { provide: FindClientHistoryUseCase, useFactory: (repo: IClientHistoryRepository) => new FindClientHistoryUseCase(repo), inject: ['IClientHistoryRepository'] },
+    {
+      provide: 'IClientHistoryRepository',
+      useClass: PrismaClientHistoryRepository,
+    },
+    {
+      provide: FindClientHistoryUseCase,
+      useFactory: (repo: IClientHistoryRepository) =>
+        new FindClientHistoryUseCase(repo),
+      inject: ['IClientHistoryRepository'],
+    },
     {
       provide: ResolveAutomationClientUseCase,
       useFactory: (repo: IClientPhoneRepository) =>
@@ -67,6 +102,10 @@ import type { IClientHistoryRepository } from './domain/client-history.repositor
       inject: ['IClientRepository'],
     },
   ],
-  exports: [FindClientUseCase, ResolveAutomationClientUseCase, FindClientHistoryUseCase],
+  exports: [
+    FindClientUseCase,
+    ResolveAutomationClientUseCase,
+    FindClientHistoryUseCase,
+  ],
 })
 export class ClientModule {}
