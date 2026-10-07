@@ -18,8 +18,8 @@ import { FindClientUseCase } from '../../clients/application/find.client.usecase
 import { ResolveAutomationClientUseCase } from '../../clients/application/resolve-automation-client.usecase';
 import { ClientPresenter } from '../../clients/presentation/presenters/clients.presenter';
 import { Automation } from '../../infra/security/decorators/automation.decorator';
-import { FindAllServiceUseCase } from '../../services/application/find-all.service.usecase';
-import { ServicePresenter } from '../../services/presentation/presenters/service.presenter';
+import { FindAllCatalogItemUseCase } from '../../catalog/application/find-all.catalog-item.usecase';
+import { CatalogItemPresenter } from '../../catalog/presentation/presenters/catalog-item.presenter';
 import {
   CreateAutomationAppointmentDto,
   ResolveAutomationClientDto,
@@ -32,7 +32,7 @@ import { VerifyAutomationEventUseCase } from '../application/verify-automation-e
 @UseFilters(AppointmentDomainFilter)
 export class AutomationController {
   constructor(
-    private readonly services: FindAllServiceUseCase,
+    private readonly services: FindAllCatalogItemUseCase,
     private readonly hours: BusinessHoursUseCase,
     private readonly availability: FindAvailabilityUseCase,
     private readonly resolveClient: ResolveAutomationClientUseCase,
@@ -41,10 +41,10 @@ export class AutomationController {
     private readonly verifyEvent: VerifyAutomationEventUseCase,
   ) {}
 
-  @Get('services')
+  @Get('catalog')
   async listServices() {
     return (await this.services.execute(true)).map((service) =>
-      ServicePresenter.toHTTP(service),
+      CatalogItemPresenter.toHTTP(service),
     );
   }
 

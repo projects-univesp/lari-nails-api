@@ -10,6 +10,7 @@ describe('Create Client Use Case', () => {
     const mockRepository: IClientRepository = {
       save: jest.fn(),
       findById: jest.fn(),
+      findWithDeleted: jest.fn(),
       findAll: jest.fn(),
       delete: jest.fn(),
     };

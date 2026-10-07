@@ -9,13 +9,13 @@ import { FindAvailabilityUseCase } from '../src/agenda/application/find-availabi
 import { FindClientUseCase } from '../src/clients/application/find.client.usecase';
 import { Client } from '../src/clients/domain/client.entity';
 import { PrismaService } from '../src/infra/database/prisma.service';
-import { FindServiceUseCase } from '../src/services/application/find.service.usecase';
-import { Service } from '../src/services/domain/service.entity';
+import { FindCatalogItemUseCase } from '../src/catalog/application/find.catalog-item.usecase';
+import { CatalogItem } from '../src/catalog/domain/catalog-item.entity';
 
 describe('AppointmentController (e2e)', () => {
   let app: INestApplication<App>;
   const client = new Client('Maria', '11999999999');
-  const service = new Service({
+  const service = new CatalogItem({
     name: 'Manicure',
     category: 'Mãos',
     priceCents: 4500,
@@ -67,7 +67,7 @@ describe('AppointmentController (e2e)', () => {
       .useValue(repository)
       .overrideProvider(FindClientUseCase)
       .useValue({ execute: jest.fn().mockResolvedValue(client) })
-      .overrideProvider(FindServiceUseCase)
+      .overrideProvider(FindCatalogItemUseCase)
       .useValue({ execute: jest.fn().mockResolvedValue(service) })
       .overrideProvider(FindAvailabilityUseCase)
       .useValue(availability)

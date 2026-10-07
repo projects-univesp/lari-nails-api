@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../infra/database/database.module';
-import { FindServiceUseCase } from '../services/application/find.service.usecase';
-import { ServiceModule } from '../services/service.module';
+import { FindCatalogItemUseCase } from '../catalog/application/find.catalog-item.usecase';
+import { CatalogModule } from '../catalog/catalog.module';
 import { AgendaBlockUseCase } from './application/agenda-block.usecase';
 import { BusinessHoursUseCase } from './application/business-hours.usecase';
 import { FindAvailabilityUseCase } from './application/find-availability.usecase';
@@ -10,7 +10,7 @@ import { PrismaAgendaRepository } from './infra/prisma.agenda.repository';
 import { AgendaController } from './presentation/agenda.controller';
 
 @Module({
-  imports: [DatabaseModule, ServiceModule],
+  imports: [DatabaseModule, CatalogModule],
   controllers: [AgendaController],
   providers: [
     { provide: 'IAgendaRepository', useClass: PrismaAgendaRepository },
@@ -26,9 +26,9 @@ import { AgendaController } from './presentation/agenda.controller';
     },
     {
       provide: FindAvailabilityUseCase,
-      useFactory: (repo: IAgendaRepository, service: FindServiceUseCase) =>
+      useFactory: (repo: IAgendaRepository, service: FindCatalogItemUseCase) =>
         new FindAvailabilityUseCase(repo, service),
-      inject: ['IAgendaRepository', FindServiceUseCase],
+      inject: ['IAgendaRepository', FindCatalogItemUseCase],
     },
   ],
   exports: [FindAvailabilityUseCase, BusinessHoursUseCase],

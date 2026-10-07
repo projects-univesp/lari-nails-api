@@ -4,7 +4,7 @@ import { SecurityModule } from './infra/security/security.module';
 import { HttpModule } from './infra/http/http.module';
 import { ClientModule } from './clients/client.module';
 import { UsersModule } from './users/users.module';
-import { ServiceModule } from './services/service.module';
+import { CatalogModule } from './catalog/catalog.module';
 import { AgendaModule } from './agenda/agenda.module';
 import { AppointmentModule } from './appointments/appointment.module';
 import { AutomationModule } from './automation/automation.module';
@@ -18,7 +18,7 @@ import { FinanceModule } from './finance/finance.module';
     HttpModule,
     ClientModule,
     UsersModule,
-    ServiceModule,
+    CatalogModule,
     AgendaModule,
     AppointmentModule,
     AutomationModule,

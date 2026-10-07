@@ -14,6 +14,7 @@ describe('Find All Client Use Case', () => {
     const mockRepository: IClientRepository = {
       save: jest.fn(),
       findById: jest.fn(),
+      findWithDeleted: jest.fn(),
       findAll: jest.fn().mockResolvedValue(mockClients),
       delete: jest.fn(),
     };

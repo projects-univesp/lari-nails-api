@@ -2,8 +2,8 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { FindAvailabilityUseCase } from '../../agenda/application/find-availability.usecase';
 import { FindClientUseCase } from '../../clients/application/find.client.usecase';
 import { Client } from '../../clients/domain/client.entity';
-import { FindServiceUseCase } from '../../services/application/find.service.usecase';
-import { Service } from '../../services/domain/service.entity';
+import { FindCatalogItemUseCase } from '../../catalog/application/find.catalog-item.usecase';
+import { CatalogItem } from '../../catalog/domain/catalog-item.entity';
 import {
   Appointment,
   AppointmentConflictError,
@@ -13,7 +13,7 @@ import { AppointmentUseCase } from './appointment.usecase';
 
 describe('AppointmentUseCase', () => {
   const client = new Client('Maria', '11999999999');
-  const service = new Service({
+  const service = new CatalogItem({
     name: 'Manicure',
     category: 'Mãos',
     priceCents: 4500,
@@ -38,7 +38,7 @@ describe('AppointmentUseCase', () => {
   } as unknown as FindClientUseCase;
   const findService = {
     execute: jest.fn().mockResolvedValue(service),
-  } as unknown as FindServiceUseCase;
+  } as unknown as FindCatalogItemUseCase;
   const available = {
     execute: jest
       .fn()

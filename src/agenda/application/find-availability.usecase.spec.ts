@@ -1,6 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
-import { Service } from '../../services/domain/service.entity';
-import { FindServiceUseCase } from '../../services/application/find.service.usecase';
+import { CatalogItem } from '../../catalog/domain/catalog-item.entity';
+import { FindCatalogItemUseCase } from '../../catalog/application/find.catalog-item.usecase';
 import { AgendaValidationError, BusinessHours } from '../domain/agenda.rules';
 import { IAgendaRepository } from '../domain/agenda.repository.interface';
 import { FindAvailabilityUseCase } from './find-availability.usecase';
@@ -26,7 +26,7 @@ describe('FindAvailabilityUseCase', () => {
         }
       : day,
   );
-  const service = new Service({
+  const service = new CatalogItem({
     name: 'Manicure',
     category: 'Mãos',
     priceCents: 4500,
@@ -43,7 +43,7 @@ describe('FindAvailabilityUseCase', () => {
   } as unknown as IAgendaRepository;
   const findService = {
     execute: jest.fn().mockResolvedValue(service),
-  } as unknown as FindServiceUseCase;
+  } as unknown as FindCatalogItemUseCase;
   const useCase = new FindAvailabilityUseCase(repository, findService);
 
   it('respeita duração, pausa, bloqueio e dias fechados', async () => {
@@ -78,7 +78,7 @@ describe('FindAvailabilityUseCase', () => {
   });
 
   it('não oferece um serviço inativo', async () => {
-    const inactive = new Service({
+    const inactive = new CatalogItem({
       name: 'Manicure',
       category: 'Mãos',
       priceCents: 4500,
@@ -87,7 +87,7 @@ describe('FindAvailabilityUseCase', () => {
     });
     const finder = {
       execute: jest.fn().mockResolvedValue(inactive),
-    } as unknown as FindServiceUseCase;
+    } as unknown as FindCatalogItemUseCase;
     await expect(
       new FindAvailabilityUseCase(repository, finder).execute(
         inactive.id,

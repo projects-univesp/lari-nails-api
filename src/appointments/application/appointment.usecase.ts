@@ -6,7 +6,7 @@ import {
   minuteOfDay,
 } from '../../agenda/domain/agenda.rules';
 import { FindClientUseCase } from '../../clients/application/find.client.usecase';
-import { FindServiceUseCase } from '../../services/application/find.service.usecase';
+import { FindCatalogItemUseCase } from '../../catalog/application/find.catalog-item.usecase';
 import {
   Appointment,
   AppointmentDecision,
@@ -20,7 +20,7 @@ export class AppointmentUseCase {
   constructor(
     private readonly repository: IAppointmentRepository,
     private readonly findClient: FindClientUseCase,
-    private readonly findService: FindServiceUseCase,
+    private readonly findService: FindCatalogItemUseCase,
     private readonly availability: FindAvailabilityUseCase,
   ) {}
 

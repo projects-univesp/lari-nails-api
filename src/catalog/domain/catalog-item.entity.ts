@@ -1,8 +1,8 @@
 import { randomUUID } from 'crypto';
 
-export class ServiceValidationError extends Error {}
+export class CatalogItemValidationError extends Error {}
 
-export interface ServiceData {
+export interface CatalogItemData {
   name: string;
   category: string;
   description?: string | null;
@@ -14,7 +14,7 @@ export interface ServiceData {
   updatedAt?: Date;
 }
 
-export class Service {
+export class CatalogItem {
   readonly id: string;
   readonly name: string;
   readonly category: string;
@@ -25,7 +25,7 @@ export class Service {
   readonly createdAt: Date;
   readonly updatedAt: Date;
 
-  constructor(data: ServiceData) {
+  constructor(data: CatalogItemData) {
     this.id = data.id ?? randomUUID();
     this.name = data.name;
     this.category = data.category;
@@ -41,7 +41,7 @@ export class Service {
   update(
     data: Partial<
       Pick<
-        ServiceData,
+        CatalogItemData,
         | 'name'
         | 'category'
         | 'description'
@@ -50,8 +50,8 @@ export class Service {
         | 'active'
       >
     >,
-  ): Service {
-    return new Service({
+  ): CatalogItem {
+    return new CatalogItem({
       id: this.id,
       name: data.name ?? this.name,
       category: data.category ?? this.category,
@@ -71,44 +71,44 @@ export class Service {
         this.id,
       )
     ) {
-      throw new ServiceValidationError('ID inválido');
+      throw new CatalogItemValidationError('ID inválido');
     }
     if (
       typeof this.name !== 'string' ||
       !this.name.trim() ||
       this.name.length > 120
     ) {
-      throw new ServiceValidationError('Nome do serviço inválido');
+      throw new CatalogItemValidationError('Nome do serviço inválido');
     }
     if (
       typeof this.category !== 'string' ||
       !this.category.trim() ||
       this.category.length > 80
     ) {
-      throw new ServiceValidationError('Categoria do serviço inválida');
+      throw new CatalogItemValidationError('Categoria do serviço inválida');
     }
     if (
       this.description !== null &&
       (typeof this.description !== 'string' || this.description.length > 5000)
     ) {
-      throw new ServiceValidationError('Descrição do serviço inválida');
+      throw new CatalogItemValidationError('Descrição do serviço inválida');
     }
     if (
       !Number.isSafeInteger(this.priceCents) ||
       this.priceCents < 0 ||
       this.priceCents > 2147483647
     ) {
-      throw new ServiceValidationError('Preço em centavos inválido');
+      throw new CatalogItemValidationError('Preço em centavos inválido');
     }
     if (
       !Number.isSafeInteger(this.durationMinutes) ||
       this.durationMinutes < 1 ||
       this.durationMinutes > 1440
     ) {
-      throw new ServiceValidationError('Duração em minutos inválida');
+      throw new CatalogItemValidationError('Duração em minutos inválida');
     }
     if (typeof this.active !== 'boolean') {
-      throw new ServiceValidationError('Status ativo inválido');
+      throw new CatalogItemValidationError('Status ativo inválido');
     }
   }
 }

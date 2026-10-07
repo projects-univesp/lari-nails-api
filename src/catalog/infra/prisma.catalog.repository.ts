@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { Service } from '../domain/service.entity';
-import { IServiceRepository } from '../domain/service.repository.interface';
+import { CatalogItem } from '../domain/catalog-item.entity';
+import { ICatalogRepository } from '../domain/catalog.repository.interface';
 import { PrismaService } from '../../infra/database/prisma.service';
 
 @Injectable()
-export class PrismaServiceRepository implements IServiceRepository {
+export class PrismaCatalogRepository implements ICatalogRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async save(service: Service): Promise<void> {
-    await this.prisma.serviceModel.upsert({
+  async save(service: CatalogItem): Promise<void> {
+    await this.prisma.catalogItemModel.upsert({
       where: { id: service.id },
       create: {
         id: service.id,
@@ -33,16 +33,16 @@ export class PrismaServiceRepository implements IServiceRepository {
     });
   }
 
-  async findById(id: string): Promise<Service | null> {
-    const raw = await this.prisma.serviceModel.findUnique({ where: { id } });
-    return raw ? new Service(raw) : null;
+  async findById(id: string): Promise<CatalogItem | null> {
+    const raw = await this.prisma.catalogItemModel.findUnique({ where: { id } });
+    return raw ? new CatalogItem(raw) : null;
   }
 
-  async findAll(active?: boolean): Promise<Service[]> {
-    const records = await this.prisma.serviceModel.findMany({
+  async findAll(active?: boolean): Promise<CatalogItem[]> {
+    const records = await this.prisma.catalogItemModel.findMany({
       where: active === undefined ? undefined : { active },
       orderBy: [{ category: 'asc' }, { name: 'asc' }],
     });
-    return records.map((record) => new Service(record));
+    return records.map((record) => new CatalogItem(record));
   }
 }

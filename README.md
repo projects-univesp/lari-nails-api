@@ -58,13 +58,13 @@ A infraestrutura compartilhada inclui:
 | `PATCH` | `/clients/:id/restore` | Autenticado | Restaura um cliente desativado |
 | `DELETE` | `/clients/:id` | Autenticado | Realiza exclusão lógica (soft delete) do cliente |
 
-### 5. Catálogo de Serviços (`/services`)
+### 5. Catálogo de Serviços (`/catalog`)
 | Método | Endpoint | Acesso | Descrição |
 |---|---|---|---|
-| `POST` | `/services` | Admin | Cadastra serviço com `name`, `category`, `priceCents`, `durationMinutes`, `description?` e `active?` |
-| `GET` | `/services?active=true` | Autenticado | Lista serviços; filtro `active=true` ou `false` é opcional |
-| `GET` | `/services/:id` | Autenticado | Consulta serviço por UUID |
-| `PATCH` | `/services/:id` | Admin | Atualiza campos do serviço; `active=false` retira o serviço do catálogo disponível |
+| `POST` | `/catalog` | Admin | Cadastra item do catálogo com `name`, `category`, `priceCents`, `durationMinutes`, `description?` e `active?` |
+| `GET` | `/catalog?active=true` | Autenticado | Lista itens do catálogo; filtro `active=true` ou `false` é opcional |
+| `GET` | `/catalog/:id` | Autenticado | Consulta item do catálogo por UUID |
+| `PATCH` | `/catalog/:id` | Admin | Atualiza campos do item; `active=false` retira o item do catálogo disponível |
 
 O preço é armazenado em centavos inteiros e a duração em minutos inteiros (de 1 a 1440). A rota de listagem sem filtro retorna serviços ativos e inativos para permitir sua administração. Aplique a migração antes de usar o catálogo: `npm run prisma:migrate:deploy`.
 
@@ -117,7 +117,7 @@ As rotas de automação são destinadas a integrações externas autenticadas po
 
 | Método | Endpoint | Uso |
 |---|---|---|
-| `GET` | `/automation/services` | Serviços ativos para o bot |
+| `GET` | `/automation/catalog` | Itens ativos do catálogo para o bot |
 | `GET` | `/automation/business-hours` | Expediente semanal |
 | `GET` | `/automation/availability?serviceId=UUID&from=YYYY-MM-DD&to=YYYY-MM-DD` | Vagas reais |
 | `POST` | `/automation/clients/resolve` | Encontra ou cria cliente por telefone brasileiro, aceitando JID `@s.whatsapp.net` |

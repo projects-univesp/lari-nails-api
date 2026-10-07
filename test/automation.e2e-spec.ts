@@ -5,7 +5,7 @@ import { App } from 'supertest/types';
 import { AutomationModule } from '../src/automation/automation.module';
 import { SecurityModule } from '../src/infra/security/security.module';
 import { PrismaService } from '../src/infra/database/prisma.service';
-import { FindAllServiceUseCase } from '../src/services/application/find-all.service.usecase';
+import { FindAllCatalogItemUseCase } from '../src/catalog/application/find-all.catalog-item.usecase';
 import { BusinessHoursUseCase } from '../src/agenda/application/business-hours.usecase';
 import { FindAvailabilityUseCase } from '../src/agenda/application/find-availability.usecase';
 import { ResolveAutomationClientUseCase } from '../src/clients/application/resolve-automation-client.usecase';
@@ -36,7 +36,7 @@ describe('AutomationController (e2e)', () => {
     })
       .overrideProvider(PrismaService)
       .useValue({ $connect: jest.fn(), $disconnect: jest.fn() })
-      .overrideProvider(FindAllServiceUseCase)
+      .overrideProvider(FindAllCatalogItemUseCase)
       .useValue({ execute: jest.fn().mockResolvedValue([]) })
       .overrideProvider(BusinessHoursUseCase)
       .useValue({ list: jest.fn().mockResolvedValue([]) })
@@ -68,17 +68,17 @@ describe('AutomationController (e2e)', () => {
   });
 
   it('rejeita sessão humana e chave incorreta; aceita chave de automação', async () => {
-    await request(app.getHttpServer()).get('/automation/services').expect(401);
+    await request(app.getHttpServer()).get('/automation/catalog').expect(401);
     await request(app.getHttpServer())
-      .get('/automation/services')
+      .get('/automation/catalog')
       .set('Authorization', 'Bearer human-token')
       .expect(401);
     await request(app.getHttpServer())
-      .get('/automation/services')
+      .get('/automation/catalog')
       .set('x-automation-key', 'wrong')
       .expect(401);
     await request(app.getHttpServer())
-      .get('/automation/services')
+      .get('/automation/catalog')
       .set('x-automation-key', key)
       .expect(200, []);
   });
