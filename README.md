@@ -120,7 +120,40 @@ Cada decisão de agendamento grava `appointment.status_changed` na tabela `event
 
 ### Pré-requisitos
 - Node.js 24.x
+- npm
 - Docker e Docker Compose
+
+### Executar a versão de desenvolvimento com o frontend
+
+Clone a branch `dev` dos dois repositórios em pastas lado a lado:
+
+```bash
+git clone --branch dev https://github.com/projects-univesp/lari-nails-api.git
+git clone --branch dev https://github.com/projects-univesp/Lari-Nails.git
+```
+
+No backend, instale as dependências e configure o ambiente:
+
+```bash
+cd lari-nails-api
+npm install
+cp .env.example .env
+```
+
+No `.env`, defina um `JWT_SECRET` aleatório com pelo menos 32 caracteres e configure `CORS_ORIGIN=http://localhost:5173` para o frontend local. O `DATABASE_URL` de exemplo usa o PostgreSQL local na porta `5432`.
+
+Suba o banco, gere o cliente Prisma, aplique as migrações e inicie a API:
+
+```bash
+docker compose up -d postgres
+npm run prisma:generate
+npm run prisma:migrate:dev
+npm run start:dev
+```
+
+Em outro terminal, inicie o frontend conforme o README do repositório `Lari-Nails`. No primeiro acesso, a interface apresenta o formulário para criar o usuário administrador. A API ficará disponível em `http://localhost:3000`.
+
+O Compose deste repositório sobe a API e o PostgreSQL. As migrações precisam ser aplicadas antes de usar as rotas de negócio.
 
 ### 1. Subir o Banco de Dados com Docker
 ```bash
@@ -132,8 +165,7 @@ Copie o arquivo de exemplo:
 ```bash
 cp .env.example .env
 ```
-Edite o arquivo `.env` para ajustar senhas e a chave `JWT_SECRET`.
-Defina `CORS_ORIGIN` com a origem publicada da interface. Caso haja mais de uma origem, separe-as por vírgula. A sessão usa cookie HTTP-only.
+Edite o arquivo `.env` para ajustar senhas e a chave `JWT_SECRET`. Para desenvolvimento local com o frontend Vite, use `CORS_ORIGIN=http://localhost:5173`. Em outros ambientes, informe a origem publicada da interface; para várias origens, separe-as por vírgula. A sessão usa cookie HTTP-only.
 
 ### 3. Rodar as Migrações do Banco
 ```bash
@@ -141,10 +173,7 @@ npm run prisma:generate
 npm run prisma:migrate:dev
 ```
 
-*(Opcional)* Popular banco com dados iniciais:
-```bash
-npm run seed
-```
+No primeiro acesso, crie o administrador pelo formulário inicial do frontend. Ele usa os endpoints públicos `/auth/setup-status` e `/auth/setup`.
 
 ### 4. Iniciar a Aplicação
 ```bash
@@ -191,7 +220,7 @@ Para construir a imagem Docker:
 docker build -t lari-nails-api .
 ```
 
-Ou subir o ecossistema completo via Compose:
+Ou subir a API e o PostgreSQL via Compose (depois de aplicar as migrações):
 ```bash
 docker compose up -d --build
 ```
