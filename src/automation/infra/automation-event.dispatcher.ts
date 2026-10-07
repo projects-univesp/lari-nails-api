@@ -1,12 +1,27 @@
 import { createHmac } from 'crypto';
 import {
+  Inject,
   Injectable,
   Logger,
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
-import { PrismaService } from '../../infra/database/prisma.service';
+import type {
+  IAutomationEventRepository,
+  PendingAutomationEvent,
+} from '../domain/automation-event.repository.interface';
 
+const POLL_INTERVAL_MS = 30_000;
+const LOCK_MS = 120_000;
+const BATCH_SIZE = 20;
+const MAX_BACKOFF_MS = 3_600_000;
+const DELIVERY_TIMEOUT_MS = 10_000;
+
+/**
+ * Processo de entrega de eventos de automação por webhook. Mantém a política de
+ * entrega (assinatura, retry com backoff exponencial) e delega toda a
+ * persistência à porta IAutomationEventRepository.
+ */
 @Injectable()
 export class AutomationEventDispatcher
   implements OnModuleInit, OnModuleDestroy
@@ -15,7 +30,10 @@ export class AutomationEventDispatcher
   private timer?: NodeJS.Timeout;
   private sending = false;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject('IAutomationEventRepository')
+    private readonly repository: IAutomationEventRepository,
+  ) {}
 
   onModuleInit() {
     const url = process.env.AUTOMATION_EVENT_WEBHOOK_URL;
@@ -29,7 +47,7 @@ export class AutomationEventDispatcher
     }
     this.timer = setInterval(() => {
       void this.dispatchDue(url, secret);
-    }, 30_000);
+    }, POLL_INTERVAL_MS);
     this.timer.unref();
     void this.dispatchDue(url, secret);
   }
@@ -59,26 +77,14 @@ export class AutomationEventDispatcher
     this.sending = true;
     try {
       const now = new Date();
-      const events = await this.prisma.automationEventModel.findMany({
-        where: {
-          deliveredAt: null,
-          nextAttemptAt: { lte: now },
-          OR: [{ lockedUntil: null }, { lockedUntil: { lt: now } }],
-        },
-        orderBy: { createdAt: 'asc' },
-        take: 20,
-      });
+      const events = await this.repository.findDue(now, BATCH_SIZE);
       for (const event of events) {
-        const claimed = await this.prisma.automationEventModel.updateMany({
-          where: {
-            id: event.id,
-            deliveredAt: null,
-            nextAttemptAt: { lte: now },
-            OR: [{ lockedUntil: null }, { lockedUntil: { lt: now } }],
-          },
-          data: { lockedUntil: new Date(Date.now() + 120_000) },
-        });
-        if (claimed.count !== 1) continue;
+        const claimed = await this.repository.claim(
+          event.id,
+          now,
+          new Date(Date.now() + LOCK_MS),
+        );
+        if (!claimed) continue;
         await this.deliver(event, url, secret);
       }
     } catch (error) {
@@ -91,14 +97,7 @@ export class AutomationEventDispatcher
   }
 
   private async deliver(
-    event: {
-      id: string;
-      type: string;
-      aggregateId: string;
-      payload: unknown;
-      createdAt: Date;
-      attempts: number;
-    },
+    event: PendingAutomationEvent,
     url: string,
     secret: string,
   ): Promise<void> {
@@ -125,31 +124,21 @@ export class AutomationEventDispatcher
         },
         body,
         redirect: 'error',
-        signal: AbortSignal.timeout(10_000),
+        signal: AbortSignal.timeout(DELIVERY_TIMEOUT_MS),
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      await this.prisma.automationEventModel.update({
-        where: { id: event.id },
-        data: { deliveredAt: new Date(), lockedUntil: null, lastError: null },
-      });
+      await this.repository.markDelivered(event.id);
     } catch (error) {
       const attempts = event.attempts + 1;
       const delay = Math.min(
-        30_000 * 2 ** Math.min(attempts - 1, 7),
-        3_600_000,
+        POLL_INTERVAL_MS * 2 ** Math.min(attempts - 1, 7),
+        MAX_BACKOFF_MS,
       );
-      await this.prisma.automationEventModel.update({
-        where: { id: event.id },
-        data: {
-          attempts: { increment: 1 },
-          nextAttemptAt: new Date(Date.now() + delay),
-          lockedUntil: null,
-          lastError:
-            error instanceof Error
-              ? error.message.slice(0, 500)
-              : 'Falha de entrega',
-        },
-      });
+      await this.repository.markFailed(
+        event.id,
+        new Date(Date.now() + delay),
+        error instanceof Error ? error.message : 'Falha de entrega',
+      );
     }
   }
 }
