@@ -9,8 +9,10 @@ export class CreateClientUseCase {
     telefone: string,
     status?: string,
     totalFaltas?: number,
+    tags?: string[],
+    birthday?: string,
   ): Promise<void> {
-    const client = new Client(nome, telefone, status, totalFaltas);
+    const client = new Client(nome, telefone, status, totalFaltas, undefined, undefined, undefined, null, tags, birthday ?? null);
 
     await this.clientRepository.save(client);
   }

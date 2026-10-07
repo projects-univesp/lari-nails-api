@@ -8,6 +8,7 @@ import { FindClientUseCase } from '../application/find.client.usecase';
 import { DeleteClientUseCase } from '../application/delete.client.usecase';
 import { UpdateClientUseCase } from '../application/update.client.usecase';
 import { RestoreClientUseCase } from '../application/restore.client.usecase';
+import { FindClientHistoryUseCase } from '../application/find-client-history.usecase';
 
 describe('ClientController', () => {
   let controller: ClientController;
@@ -41,6 +42,7 @@ describe('ClientController', () => {
         { provide: DeleteClientUseCase, useValue: mockDeleteUseCase },
         { provide: UpdateClientUseCase, useValue: mockUpdateUseCase },
         { provide: RestoreClientUseCase, useValue: mockRestoreUseCase },
+        { provide: FindClientHistoryUseCase, useValue: { execute: jest.fn() } },
       ],
     }).compile();
 
@@ -66,6 +68,8 @@ describe('ClientController', () => {
       body.telefone,
       body.status,
       body.totalFaltas,
+      undefined,
+      undefined,
     );
     expect(result).toEqual({ message: 'Cliente criado com sucesso' });
   });
@@ -83,6 +87,8 @@ describe('ClientController', () => {
       telefone: mockClient.getTelefone(),
       status: mockClient.getStatus(),
       totalFaltas: mockClient.getTotalFaltas(),
+      tags: [],
+      bday: null,
       createdAt: mockClient.getCreatedAt(),
       updatedAt: mockClient.getUpdatedAt(),
       _links: {

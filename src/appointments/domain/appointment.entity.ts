@@ -6,9 +6,9 @@ import {
 } from '../../agenda/domain/agenda.rules';
 
 export type AppointmentStatus =
-  'AGUARDANDO' | 'CONFIRMADO' | 'REAGENDAMENTO_SUGERIDO' | 'CANCELADO';
+  'AGUARDANDO' | 'CONFIRMADO' | 'REAGENDAMENTO_SUGERIDO' | 'CANCELADO' | 'CONCLUIDO';
 export type AppointmentSource = 'MANUAL' | 'WHATSAPP_BOT';
-export type AppointmentDecision = Exclude<AppointmentStatus, 'AGUARDANDO'>;
+export type AppointmentDecision = Exclude<AppointmentStatus, 'AGUARDANDO' | 'CONCLUIDO'>;
 
 export class AppointmentValidationError extends Error {}
 export class AppointmentConflictError extends Error {}
@@ -87,7 +87,7 @@ export class Appointment {
     proposedDate?: string,
     proposedTime?: string,
   ): Appointment {
-    if (this.status !== 'AGUARDANDO') {
+    if (this.status !== 'AGUARDANDO' && !(status === 'CANCELADO' && this.status === 'CONFIRMADO')) {
       throw new AppointmentConflictError('O pedido já foi decidido');
     }
     if (status === 'CANCELADO' && (!reason?.trim() || reason.length > 500)) {
@@ -109,6 +109,27 @@ export class Appointment {
       proposedTime: status === 'REAGENDAMENTO_SUGERIDO' ? proposedTime : null,
       updatedAt: new Date(),
     });
+  }
+
+  reschedule(requestedDate: string, requestedTime: string): Appointment {
+    if (this.status !== 'CONFIRMADO') {
+      throw new AppointmentConflictError('Somente agendamentos confirmados podem ser alterados');
+    }
+    assertDate(requestedDate);
+    minuteOfDay(requestedTime);
+    return new Appointment({
+      ...this,
+      requestedDate,
+      requestedTime,
+      updatedAt: new Date(),
+    });
+  }
+
+  complete(): Appointment {
+    if (this.status !== 'CONFIRMADO') {
+      throw new AppointmentConflictError('Somente atendimentos confirmados podem ser concluídos');
+    }
+    return new Appointment({ ...this, status: 'CONCLUIDO', updatedAt: new Date() });
   }
 
   private validate(): void {
@@ -140,6 +161,7 @@ export class Appointment {
         'CONFIRMADO',
         'REAGENDAMENTO_SUGERIDO',
         'CANCELADO',
+        'CONCLUIDO',
       ].includes(this.status)
     ) {
       throw new AppointmentValidationError('Origem ou estado inválido');

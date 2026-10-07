@@ -1,4 +1,4 @@
-import { IsString, MaxLength, IsOptional, IsInt, Min } from 'class-validator';
+import { IsString, MaxLength, IsOptional, IsInt, Min, IsArray, ArrayMaxSize, ArrayUnique, Matches } from 'class-validator';
 
 export class UpdateClientDto {
   @IsOptional()
@@ -20,4 +20,16 @@ export class UpdateClientDto {
   @IsInt({ message: 'O total de faltas deve ser um número inteiro' })
   @Min(0, { message: 'O total de faltas não pode ser negativo' })
   totalFaltas?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @ArrayUnique()
+  @IsString({ each: true })
+  tags?: string[];
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^(0[1-9]|[12]\d|3[01])\/(0[1-9]|1[0-2])$/)
+  birthday?: string | null;
 }

@@ -8,6 +8,8 @@ export class ClientPresenter {
       telefone: client.getTelefone(),
       status: client.getStatus(),
       totalFaltas: client.getTotalFaltas(),
+      tags: client.getTags(),
+      bday: client.getBirthday(),
       createdAt: client.getCreatedAt(),
       updatedAt: client.getUpdatedAt(),
       _links: {

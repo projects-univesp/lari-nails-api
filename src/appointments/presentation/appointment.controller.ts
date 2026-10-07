@@ -7,6 +7,7 @@ import {
   Post,
   Query,
   Req,
+  Patch,
   UseFilters,
 } from '@nestjs/common';
 import type { Request } from 'express';
@@ -17,6 +18,7 @@ import {
   DecideAppointmentDto,
   IdAppointmentDto,
   ListAppointmentsDto,
+  RescheduleAppointmentDto,
 } from './dtos/appointment.dto';
 import { AppointmentDomainFilter } from './filters/appointment.domain.filter';
 import { AppointmentPresenter } from './presenters/appointment.presenter';
@@ -63,6 +65,13 @@ export class AppointmentController {
   @Get(':id/history')
   history(@Param() params: IdAppointmentDto) {
     return this.appointments.history(params.id);
+  }
+
+  @Roles('admin')
+  @Patch(':id/reschedule')
+  async reschedule(@Param() params: IdAppointmentDto, @Body() body: RescheduleAppointmentDto, @Req() request: Request) {
+    const actor = request.user as AuthenticatedUser;
+    return AppointmentPresenter.toHTTP(await this.appointments.reschedule(params.id, body.requestedDate, body.requestedTime, actor.sub));
   }
 
   @Roles('admin')

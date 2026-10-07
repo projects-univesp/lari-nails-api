@@ -37,8 +37,8 @@ export class ListAppointmentsDto {
   to!: string;
 
   @IsOptional()
-  @IsIn(['AGUARDANDO', 'CONFIRMADO', 'REAGENDAMENTO_SUGERIDO', 'CANCELADO'])
-  status?: 'AGUARDANDO' | 'CONFIRMADO' | 'REAGENDAMENTO_SUGERIDO' | 'CANCELADO';
+  @IsIn(['AGUARDANDO', 'CONFIRMADO', 'REAGENDAMENTO_SUGERIDO', 'CANCELADO', 'CONCLUIDO'])
+  status?: 'AGUARDANDO' | 'CONFIRMADO' | 'REAGENDAMENTO_SUGERIDO' | 'CANCELADO' | 'CONCLUIDO';
 }
 
 export class IdAppointmentDto {
@@ -63,4 +63,12 @@ export class DecideAppointmentDto {
   @ValidateIf((_, value: unknown) => value !== undefined)
   @Matches(TIME)
   proposedTime?: string;
+}
+
+export class RescheduleAppointmentDto {
+  @Matches(DATE)
+  requestedDate!: string;
+
+  @Matches(TIME)
+  requestedTime!: string;
 }

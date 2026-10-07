@@ -149,6 +149,48 @@ export class PrismaAppointmentRepository implements IAppointmentRepository {
     return next;
   }
 
+  async reschedule(current: Appointment, next: Appointment, actorId: string): Promise<Appointment> {
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        const updated = await tx.appointmentModel.updateMany({
+          where: { id: current.id, status: 'CONFIRMADO' },
+          data: {
+            requestedDate: this.date(next.requestedDate),
+            requestedTime: next.requestedTime,
+            endTime: next.endTime,
+            startAt: this.localTimestamp(next.requestedDate, next.requestedTime),
+            endAt: this.localTimestamp(next.requestedDate, next.endTime),
+            updatedAt: next.updatedAt,
+          },
+        });
+        if (updated.count !== 1) throw new AppointmentConflictError('O agendamento foi alterado por outra operação');
+        await tx.appointmentStatusEventModel.create({
+          data: {
+            appointmentId: current.id,
+            fromStatus: 'CONFIRMADO',
+            toStatus: 'CONFIRMADO',
+            actorType: 'MANICURE',
+            actorId,
+            reason: `Reagendado de ${current.requestedDate} ${current.requestedTime}`,
+            proposedDate: this.date(next.requestedDate),
+            proposedTime: next.requestedTime,
+          },
+        });
+        await tx.automationEventModel.create({
+          data: {
+            type: 'appointment.rescheduled',
+            aggregateId: next.id,
+            payload: { appointmentId: next.id, oldDate: current.requestedDate, oldTime: current.requestedTime, requestedDate: next.requestedDate, requestedTime: next.requestedTime },
+          },
+        });
+      });
+    } catch (error) {
+      if (this.isOverlap(error)) throw new AppointmentConflictError('Horário já ocupado');
+      throw error;
+    }
+    return next;
+  }
+
   async history(id: string): Promise<AppointmentStatusEvent[]> {
     const records = await this.prisma.appointmentStatusEventModel.findMany({
       where: { appointmentId: id },

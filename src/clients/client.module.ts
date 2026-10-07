@@ -12,16 +12,24 @@ import { UpdateClientUseCase } from './application/update.client.usecase';
 import { RestoreClientUseCase } from './application/restore.client.usecase';
 import { ResolveAutomationClientUseCase } from './application/resolve-automation-client.usecase';
 import { IClientPhoneRepository } from './domain/client-phone.repository.interface';
+import { FindClientHistoryUseCase } from './application/find-client-history.usecase';
+import { PrismaClientHistoryRepository } from './infra/prisma.client-history.repository';
+import { ClientTagsController } from './presentation/client-tags.controller';
+import { ClientTagRepository } from './infra/client-tag.repository';
+import type { IClientHistoryRepository } from './domain/client-history.repository.interface';
 
 @Module({
   imports: [DatabaseModule],
-  controllers: [ClientController],
+  controllers: [ClientController, ClientTagsController],
   providers: [
+    ClientTagRepository,
     {
       provide: 'IClientRepository',
       useClass: PrismaClientRepository,
     },
     { provide: 'IClientPhoneRepository', useExisting: 'IClientRepository' },
+    { provide: 'IClientHistoryRepository', useClass: PrismaClientHistoryRepository },
+    { provide: FindClientHistoryUseCase, useFactory: (repo: IClientHistoryRepository) => new FindClientHistoryUseCase(repo), inject: ['IClientHistoryRepository'] },
     {
       provide: ResolveAutomationClientUseCase,
       useFactory: (repo: IClientPhoneRepository) =>
@@ -59,6 +67,6 @@ import { IClientPhoneRepository } from './domain/client-phone.repository.interfa
       inject: ['IClientRepository'],
     },
   ],
-  exports: [FindClientUseCase, ResolveAutomationClientUseCase],
+  exports: [FindClientUseCase, ResolveAutomationClientUseCase, FindClientHistoryUseCase],
 })
 export class ClientModule {}

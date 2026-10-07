@@ -32,6 +32,8 @@ export class PrismaClientRepository implements IClientRepository {
           normalizedPhone: client.isDeleted() ? null : phone,
           status: client.getStatus(),
           totalFaltas: client.getTotalFaltas(),
+          tags: client.getTags(),
+          birthday: client.getBirthday(),
           createdAt: client.getCreatedAt(),
           updatedAt: client.getUpdatedAt(),
           deletedAt: client.getDeletedAt(),
@@ -42,6 +44,8 @@ export class PrismaClientRepository implements IClientRepository {
           normalizedPhone: client.isDeleted() ? null : phone,
           status: client.getStatus(),
           totalFaltas: client.getTotalFaltas(),
+          tags: client.getTags(),
+          birthday: client.getBirthday(),
           updatedAt: client.getUpdatedAt(),
           deletedAt: client.getDeletedAt(),
         },
@@ -143,6 +147,8 @@ export class PrismaClientRepository implements IClientRepository {
       raw.createdAt,
       raw.updatedAt,
       raw.deletedAt,
+      raw.tags,
+      raw.birthday,
     );
   }
 
@@ -173,6 +179,8 @@ export class PrismaClientRepository implements IClientRepository {
       raw.createdAt,
       raw.updatedAt,
       raw.deletedAt,
+      raw.tags,
+      raw.birthday,
     );
   }
 
@@ -194,6 +202,8 @@ export class PrismaClientRepository implements IClientRepository {
       raw.createdAt,
       raw.updatedAt,
       raw.deletedAt,
+      raw.tags,
+      raw.birthday,
     );
   }
 
@@ -212,6 +222,8 @@ export class PrismaClientRepository implements IClientRepository {
           raw.createdAt,
           raw.updatedAt,
           raw.deletedAt,
+          raw.tags,
+          raw.birthday,
         ),
     );
   }

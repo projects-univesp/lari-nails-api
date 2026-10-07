@@ -83,6 +83,6 @@ export class AgendaController {
 
   @Get('availability')
   findAvailability(@Query() query: AvailabilityQueryDto) {
-    return this.availability.execute(query.serviceId, query.from, query.to);
+    return this.availability.execute(query.serviceId, query.from, query.to, new Date(), query.excludeAppointmentId);
   }
 }

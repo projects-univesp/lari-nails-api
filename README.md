@@ -93,7 +93,23 @@ Em `business-hours`, cada dia tem `dayOfWeek` (0 = domingo a 6 = sábado), `isOp
 
 `CANCELADO` exige `reason`; `REAGENDAMENTO_SUGERIDO` exige data e horário novos. A API grava o ator autenticado e o evento de histórico na mesma transação da decisão. `AGUARDANDO` e `CONFIRMADO` ocupam o intervalo no banco; pedidos pendentes permanecem ocupando até a decisão, sem expiração automática nesta etapa. A restrição de exclusão do PostgreSQL impede reservas sobrepostas mesmo sob requisições simultâneas. Uma sugestão libera o intervalo original e **não reserva** o horário proposto: ele será conferido novamente antes de uma futura aceitação pela cliente. As respostas usam datas locais `YYYY-MM-DD` e horários `HH:mm` de São Paulo.
 
-### 8. Integração de automações (`/automation`)
+Agendamentos confirmados também podem ser reagendados por `PATCH /appointments/:id/reschedule` (admin), com `requestedDate` e `requestedTime`; a API valida disponibilidade e registra o evento. A decisão `CANCELADO` também pode cancelar um atendimento já confirmado. O status `CONCLUIDO` indica que o atendimento foi encerrado no checkout.
+
+### 8. Financeiro e histórico de clientes (`/finance`, `/clients`)
+
+| Método | Endpoint | Acesso | Descrição |
+|---|---|---|---|
+| `POST` | `/finance/appointments/:appointmentId/checkout` | Admin | Encerra atendimento confirmado e registra pagamento recebido ou pendente |
+| `GET` | `/finance/transactions?from=YYYY-MM-DD&to=YYYY-MM-DD` | Admin | Lista pagamentos e valores a receber no período |
+| `PATCH` | `/finance/transactions/:id/receive` | Admin | Registra o recebimento de uma transação pendente |
+| `GET` | `/clients/:id/history` | Autenticado | Lista atendimentos concluídos e seus pagamentos |
+| `GET` | `/client-tags` | Autenticado | Lista classificações de clientes |
+| `POST` | `/client-tags` | Admin | Cria uma classificação |
+| `DELETE` | `/client-tags/:name` | Admin | Remove classificação |
+
+Valores são enviados em centavos inteiros. Pagamentos aceitam `PIX`, `CARTAO` ou `DINHEIRO`; pagamentos pendentes não têm método até o recebimento. O checkout, a conclusão do atendimento e o evento de automação são gravados na mesma transação. Clientes também aceitam `tags` e `birthday` no formato `DD/MM`.
+
+### 9. Integração de automações (`/automation`)
 
 As rotas abaixo exigem `X-Automation-Key` com a chave definida em `AUTOMATION_API_KEY` (mínimo de 32 caracteres). Elas não aceitam o cookie ou token de uma sessão humana.
 

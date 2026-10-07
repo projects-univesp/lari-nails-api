@@ -92,7 +92,7 @@ describe('AppointmentUseCase', () => {
     expect(createMock).not.toHaveBeenCalled();
   });
 
-  it('confirma uma vez e recusa nova decisão', async () => {
+  it('confirma e permite cancelar o agendamento confirmado uma vez', async () => {
     const created = await useCase.create(input, 'actor');
     const confirmed = await useCase.decide(
       created.id,
@@ -100,13 +100,13 @@ describe('AppointmentUseCase', () => {
       'actor',
     );
     expect(confirmed.status).toBe('CONFIRMADO');
-    await expect(
-      useCase.decide(
-        created.id,
-        { status: 'CANCELADO', reason: 'Teste' },
-        'actor',
-      ),
-    ).rejects.toThrow(AppointmentConflictError);
+    const cancelled = await useCase.decide(
+      created.id,
+      { status: 'CANCELADO', reason: 'Teste' },
+      'actor',
+    );
+    expect(cancelled.status).toBe('CANCELADO');
+    await expect(useCase.decide(created.id, { status: 'CANCELADO', reason: 'Teste' }, 'actor')).rejects.toThrow(AppointmentConflictError);
   });
 
   it('não cria pedido para cliente inexistente', async () => {

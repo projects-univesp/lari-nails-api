@@ -8,6 +8,8 @@ export interface UpdateClientInput {
   telefone?: string;
   status?: string;
   totalFaltas?: number;
+  tags?: string[];
+  birthday?: string | null;
 }
 
 @Injectable()
@@ -28,6 +30,8 @@ export class UpdateClientUseCase {
       telefone: input.telefone,
       status: input.status,
       totalFaltas: input.totalFaltas,
+      tags: input.tags,
+      birthday: input.birthday,
     });
 
     await this.clientRepository.save(client);

@@ -107,6 +107,16 @@ export class AppointmentUseCase {
     return this.repository.transition(current, next, actorId);
   }
 
+  async reschedule(id: string, requestedDate: string, requestedTime: string, actorId: string): Promise<Appointment> {
+    const current = await this.find(id);
+    const next = current.reschedule(requestedDate, requestedTime);
+    const slots = await this.availability.execute(current.serviceId, requestedDate, requestedDate, new Date(), id);
+    if (!slots.some((slot) => slot.startTime === requestedTime)) {
+      throw new ConflictException('Horário indisponível');
+    }
+    return this.repository.reschedule(current, next, actorId);
+  }
+
   async history(id: string): Promise<AppointmentStatusEvent[]> {
     await this.find(id);
     return this.repository.history(id);

@@ -14,12 +14,22 @@ model ClientModel {
   normalizedPhone String? @unique @map("normalized_phone") @db.VarChar(13)
   status       String   @default("ativo") @db.VarChar(20)
   totalFaltas  Int      @default(0) @map("total_faltas")
+  birthday     String?  @db.VarChar(5)
+  tags         String[] @default([])
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
   deletedAt    DateTime? @map("deleted_at")
   appointments AppointmentModel[]
 
   @@map("clientes")
+}
+
+model ClientTagModel {
+  id        String   @id @default(uuid())
+  name      String   @unique @db.VarChar(40)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("etiquetas_clientes")
 }
 
 model UserModel {
@@ -97,6 +107,7 @@ model AppointmentModel {
   client          ClientModel @relation(fields: [clientId], references: [id])
   service         ServiceModel @relation(fields: [serviceId], references: [id])
   history         AppointmentStatusEventModel[]
+  payment         PaymentModel?
 
   @@index([requestedDate, status])
   @@index([clientId, requestedDate])
@@ -118,6 +129,21 @@ model AppointmentStatusEventModel {
 
   @@index([appointmentId, occurredAt])
   @@map("historico_status_agendamento")
+}
+
+model PaymentModel {
+  id            String   @id @default(uuid())
+  appointmentId String   @unique @map("appointment_id")
+  amountCents   Int      @map("amount_cents")
+  status        String   @db.VarChar(20)
+  method        String?  @db.VarChar(20)
+  paidAt        DateTime? @map("paid_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  appointment   AppointmentModel @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
+
+  @@index([status, paidAt])
+  @@map("pagamentos")
 }
 
 model AutomationEventModel {

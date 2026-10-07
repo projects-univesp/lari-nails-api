@@ -11,5 +11,6 @@ export interface IAgendaRepository {
   listOccupied(
     from: string,
     to: string,
+    excludeAppointmentId?: string,
   ): Promise<{ date: string; startTime: string; endTime: string }[]>;
 }

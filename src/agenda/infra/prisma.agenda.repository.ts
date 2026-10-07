@@ -102,11 +102,13 @@ export class PrismaAgendaRepository implements IAgendaRepository {
   async listOccupied(
     from: string,
     to: string,
+    excludeAppointmentId?: string,
   ): Promise<{ date: string; startTime: string; endTime: string }[]> {
     const records = await this.prisma.appointmentModel.findMany({
       where: {
         requestedDate: { gte: this.date(from), lte: this.date(to) },
         status: { in: ['AGUARDANDO', 'CONFIRMADO'] },
+        ...(excludeAppointmentId ? { id: { not: excludeAppointmentId } } : {}),
       },
       select: { requestedDate: true, requestedTime: true, endTime: true },
     });

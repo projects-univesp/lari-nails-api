@@ -21,6 +21,10 @@ export class DateRangeDto {
 export class AvailabilityQueryDto extends DateRangeDto {
   @IsUUID('4')
   serviceId!: string;
+
+  @ValidateIf((_, value: unknown) => value !== undefined)
+  @IsUUID('4')
+  excludeAppointmentId?: string;
 }
 
 export class IdAgendaBlockDto {

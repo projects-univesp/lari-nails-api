@@ -9,6 +9,8 @@ export class Client {
   private createdAt: Date;
   private updatedAt: Date;
   private deletedAt: Date | null;
+  private birthday: string | null;
+  private tags: string[];
 
   constructor(
     nome: string,
@@ -19,6 +21,8 @@ export class Client {
     createdAt?: Date,
     updatedAt?: Date,
     deletedAt: Date | null = null,
+    tags: string[] = [],
+    birthday: string | null = null,
   ) {
     this.id = id ?? randomUUID();
     this.nome = nome;
@@ -28,6 +32,8 @@ export class Client {
     this.createdAt = createdAt ?? new Date();
     this.updatedAt = updatedAt ?? new Date();
     this.deletedAt = deletedAt;
+    this.tags = tags;
+    this.birthday = birthday;
 
     this.validate();
   }
@@ -64,6 +70,9 @@ export class Client {
     return this.deletedAt;
   }
 
+  getTags(): string[] { return [...this.tags]; }
+  getBirthday(): string | null { return this.birthday; }
+
   markAsDeleted(): void {
     this.deletedAt = new Date();
     this.updatedAt = new Date();
@@ -78,6 +87,8 @@ export class Client {
     telefone?: string;
     status?: string;
     totalFaltas?: number;
+    tags?: string[];
+    birthday?: string | null;
   }): void {
     if (params.nome !== undefined) {
       this.nome = params.nome;
@@ -91,6 +102,8 @@ export class Client {
     if (params.totalFaltas !== undefined) {
       this.totalFaltas = params.totalFaltas;
     }
+    if (params.tags !== undefined) this.tags = [...params.tags];
+    if (params.birthday !== undefined) this.birthday = params.birthday;
     this.updatedAt = new Date();
     this.validate();
   }

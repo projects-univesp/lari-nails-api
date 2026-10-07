@@ -9,6 +9,7 @@ import { AgendaModule } from './agenda/agenda.module';
 import { AppointmentModule } from './appointments/appointment.module';
 import { AutomationModule } from './automation/automation.module';
 import { AppController } from './app.controller';
+import { FinanceModule } from './finance/finance.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AppController } from './app.controller';
     AgendaModule,
     AppointmentModule,
     AutomationModule,
+    FinanceModule,
   ],
   controllers: [AppController],
 })

@@ -25,6 +25,7 @@ export class FindAvailabilityUseCase {
     from: string,
     to: string,
     now: Date = new Date(),
+    excludeAppointmentId?: string,
   ): Promise<AvailableSlot[]> {
     assertDate(from);
     assertDate(to);
@@ -41,7 +42,7 @@ export class FindAvailabilityUseCase {
     const [hours, blocks, occupied] = await Promise.all([
       this.repository.listBusinessHours(),
       this.repository.listBlocks(from, to),
-      this.repository.listOccupied(from, to),
+      this.repository.listOccupied(from, to, excludeAppointmentId),
     ]);
     const localNow = this.localNow(now);
     const slots: AvailableSlot[] = [];

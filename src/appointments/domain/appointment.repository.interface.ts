@@ -18,5 +18,6 @@ export interface IAppointmentRepository {
     next: Appointment,
     actorId: string,
   ): Promise<Appointment>;
+  reschedule(current: Appointment, next: Appointment, actorId: string): Promise<Appointment>;
   history(id: string): Promise<AppointmentStatusEvent[]>;
 }
