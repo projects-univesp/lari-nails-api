@@ -1,10 +1,11 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../infra/database/prisma.service';
 
 export type CheckoutInput = { amountCents: number; status: 'PENDENTE' | 'RECEBIDO'; method?: 'PIX' | 'CARTAO' | 'DINHEIRO' };
 
+@Injectable()
 export class FinanceRepository {
   constructor(private readonly prisma: PrismaService) {}
 
