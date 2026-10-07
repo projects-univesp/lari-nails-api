@@ -1,4 +1,12 @@
-import { IsString, MaxLength, IsOptional, IsInt, Min } from 'class-validator';
+import {
+  IsString,
+  MaxLength,
+  IsOptional,
+  IsInt,
+  Min,
+  IsEmail,
+  IsDateString,
+} from 'class-validator';
 
 export class UpdateClientDto {
   @IsOptional()
@@ -10,6 +18,18 @@ export class UpdateClientDto {
   @IsString()
   @MaxLength(20, { message: 'O telefone deve ter no máximo 20 caracteres' })
   telefone?: string;
+
+  @IsOptional()
+  @IsEmail({}, { message: 'O e-mail deve ser válido' })
+  @MaxLength(255, { message: 'O e-mail deve ter no máximo 255 caracteres' })
+  email?: string;
+
+  @IsOptional()
+  @IsDateString(
+    {},
+    { message: 'A data de nascimento deve ser uma data válida' },
+  )
+  dataNasc?: string;
 
   @IsOptional()
   @IsString()

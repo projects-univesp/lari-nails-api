@@ -14,6 +14,8 @@ export class PrismaClientRepository implements IClientRepository {
         id: client.getId(),
         nome: client.getNome(),
         telefone: client.getTelefone(),
+        email: client.getEmail(),
+        dataNasc: client.getDataNasc(),
         status: client.getStatus(),
         totalFaltas: client.getTotalFaltas(),
         createdAt: client.getCreatedAt(),
@@ -23,6 +25,8 @@ export class PrismaClientRepository implements IClientRepository {
       update: {
         nome: client.getNome(),
         telefone: client.getTelefone(),
+        email: client.getEmail(),
+        dataNasc: client.getDataNasc(),
         status: client.getStatus(),
         totalFaltas: client.getTotalFaltas(),
         updatedAt: client.getUpdatedAt(),
@@ -43,6 +47,8 @@ export class PrismaClientRepository implements IClientRepository {
     return new Client(
       raw.nome,
       raw.telefone,
+      raw.email,
+      raw.dataNasc,
       raw.status,
       raw.totalFaltas,
       raw.id,
@@ -64,6 +70,8 @@ export class PrismaClientRepository implements IClientRepository {
     return new Client(
       raw.nome,
       raw.telefone,
+      raw.email,
+      raw.dataNasc,
       raw.status,
       raw.totalFaltas,
       raw.id,
@@ -82,6 +90,8 @@ export class PrismaClientRepository implements IClientRepository {
         new Client(
           raw.nome,
           raw.telefone,
+          raw.email,
+          raw.dataNasc,
           raw.status,
           raw.totalFaltas,
           raw.id,

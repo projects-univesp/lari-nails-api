@@ -38,6 +38,8 @@ export class ClientController {
     await this.createUseCase.execute(
       body.nome,
       body.telefone,
+      body.email ?? null,
+      body.dataNasc ? new Date(body.dataNasc) : null,
       body.status,
       body.totalFaltas,
     );
@@ -58,9 +60,13 @@ export class ClientController {
 
   @Patch(':id')
   async update(@Param() params: IdClientDto, @Body() body: UpdateClientDto) {
+    const { dataNasc, ...rest } = body;
     const client = await this.updateUseCase.execute({
       id: params.id,
-      ...body,
+      ...rest,
+      ...(dataNasc !== undefined
+        ? { dataNasc: dataNasc ? new Date(dataNasc) : null }
+        : {}),
     });
     return {
       message: 'Cliente atualizado com sucesso',

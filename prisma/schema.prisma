@@ -11,6 +11,8 @@ model ClientModel {
   id           String   @id @default(uuid())
   nome         String   @db.VarChar(120)
   telefone     String   @db.VarChar(20)
+  email        String?  @db.VarChar(255)
+  dataNasc     DateTime? @map("data_nasc")
   status       String   @default("ativo") @db.VarChar(20)
   totalFaltas  Int      @default(0) @map("total_faltas")
   createdAt    DateTime  @default(now()) @map("created_at")

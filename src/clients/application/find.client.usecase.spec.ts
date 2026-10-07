@@ -9,6 +9,8 @@ describe('Find Client Use Case', () => {
     const expectedClient = new Client(
       'Maria da Silva',
       '(11) 98765-4321',
+      null,
+      null,
       'ativo',
       0,
       id,
@@ -17,6 +19,7 @@ describe('Find Client Use Case', () => {
     const mockRepository: IClientRepository = {
       save: jest.fn(),
       findById: jest.fn().mockResolvedValue(expectedClient),
+      findWithDeleted: jest.fn(),
       findAll: jest.fn(),
       delete: jest.fn(),
     };

@@ -6,6 +6,8 @@ export interface UpdateClientInput {
   id: string;
   nome?: string;
   telefone?: string;
+  email?: string | null;
+  dataNasc?: Date | null;
   status?: string;
   totalFaltas?: number;
 }
@@ -26,6 +28,8 @@ export class UpdateClientUseCase {
     client.update({
       nome: input.nome,
       telefone: input.telefone,
+      email: input.email,
+      dataNasc: input.dataNasc,
       status: input.status,
       totalFaltas: input.totalFaltas,
     });

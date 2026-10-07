@@ -19,6 +19,8 @@ describe('ClientController', () => {
   const mockClient = new Client(
     'Maria da Silva',
     '(11) 98765-4321',
+    null,
+    null,
     'ativo',
     0,
     '123e4567-e89b-12d3-a456-426614174000',
@@ -55,6 +57,8 @@ describe('ClientController', () => {
     const body = {
       nome: 'Maria da Silva',
       telefone: '(11) 98765-4321',
+      email: 'maria@example.com',
+      dataNasc: '1990-05-20',
       status: 'ativo',
       totalFaltas: 0,
     };
@@ -64,6 +68,8 @@ describe('ClientController', () => {
     expect(createUseCase.execute).toHaveBeenCalledWith(
       body.nome,
       body.telefone,
+      body.email,
+      new Date(body.dataNasc),
       body.status,
       body.totalFaltas,
     );
@@ -81,6 +87,8 @@ describe('ClientController', () => {
       id: mockClient.getId(),
       nome: mockClient.getNome(),
       telefone: mockClient.getTelefone(),
+      email: mockClient.getEmail(),
+      dataNasc: mockClient.getDataNasc(),
       status: mockClient.getStatus(),
       totalFaltas: mockClient.getTotalFaltas(),
       createdAt: mockClient.getCreatedAt(),

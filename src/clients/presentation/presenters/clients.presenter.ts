@@ -6,6 +6,8 @@ export class ClientPresenter {
       id: client.getId(),
       nome: client.getNome(),
       telefone: client.getTelefone(),
+      email: client.getEmail(),
+      dataNasc: client.getDataNasc(),
       status: client.getStatus(),
       totalFaltas: client.getTotalFaltas(),
       createdAt: client.getCreatedAt(),

@@ -4,6 +4,8 @@ export class Client {
   private id: string;
   private nome: string;
   private telefone: string;
+  private email: string | null;
+  private dataNasc: Date | null;
   private status: string;
   private totalFaltas: number;
   private createdAt: Date;
@@ -13,6 +15,8 @@ export class Client {
   constructor(
     nome: string,
     telefone: string,
+    email: string | null = null,
+    dataNasc: Date | null = null,
     status: string = 'ativo',
     totalFaltas: number = 0,
     id?: string,
@@ -23,6 +27,8 @@ export class Client {
     this.id = id ?? randomUUID();
     this.nome = nome;
     this.telefone = telefone;
+    this.email = email;
+    this.dataNasc = dataNasc;
     this.status = status;
     this.totalFaltas = totalFaltas;
     this.createdAt = createdAt ?? new Date();
@@ -42,6 +48,14 @@ export class Client {
 
   getTelefone(): string {
     return this.telefone;
+  }
+
+  getEmail(): string | null {
+    return this.email;
+  }
+
+  getDataNasc(): Date | null {
+    return this.dataNasc;
   }
 
   getStatus(): string {
@@ -76,6 +90,8 @@ export class Client {
   update(params: {
     nome?: string;
     telefone?: string;
+    email?: string | null;
+    dataNasc?: Date | null;
     status?: string;
     totalFaltas?: number;
   }): void {
@@ -84,6 +100,12 @@ export class Client {
     }
     if (params.telefone !== undefined) {
       this.telefone = params.telefone;
+    }
+    if (params.email !== undefined) {
+      this.email = params.email;
+    }
+    if (params.dataNasc !== undefined) {
+      this.dataNasc = params.dataNasc;
     }
     if (params.status !== undefined) {
       this.status = params.status;
@@ -110,6 +132,9 @@ export class Client {
     if (!this.isValidTelefone(this.telefone)) {
       throw new Error('Telefone Invalido');
     }
+    if (!this.isValidEmail(this.email)) {
+      throw new Error('Email Invalido');
+    }
     if (!this.isValidStatus(this.status)) {
       throw new Error('Status Invalido');
     }
@@ -135,6 +160,19 @@ export class Client {
       typeof telefone === 'string' &&
       telefone.trim().length > 0 &&
       telefone.length <= 20
+    );
+  }
+
+  private isValidEmail(email: string | null): boolean {
+    if (email === null) {
+      return true;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return (
+      typeof email === 'string' &&
+      email.trim().length > 0 &&
+      email.length <= 255 &&
+      emailRegex.test(email)
     );
   }
 

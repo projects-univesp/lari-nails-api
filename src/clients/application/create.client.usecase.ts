@@ -7,10 +7,19 @@ export class CreateClientUseCase {
   async execute(
     nome: string,
     telefone: string,
+    email?: string | null,
+    dataNasc?: Date | null,
     status?: string,
     totalFaltas?: number,
   ): Promise<void> {
-    const client = new Client(nome, telefone, status, totalFaltas);
+    const client = new Client(
+      nome,
+      telefone,
+      email ?? null,
+      dataNasc ?? null,
+      status,
+      totalFaltas,
+    );
 
     await this.clientRepository.save(client);
   }
