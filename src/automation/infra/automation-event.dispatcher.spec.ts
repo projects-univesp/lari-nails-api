@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unnecessary-type-assertion */
-import { PrismaService } from '../../infra/database/prisma.service';
+import { AutomationEvent } from '../domain/automation-event.entity';
+import { IAutomationEventRepository } from '../domain/automation-event.repository.interface';
 import { VerifyAutomationEventUseCase } from '../application/verify-automation-event.usecase';
 import { AutomationEventDispatcher } from './automation-event.dispatcher';
 
 describe('AutomationEventDispatcher', () => {
   const secret = 's'.repeat(40);
-  const event = {
+  const pending = {
     id: 'dabea031-504f-43b6-86d0-8c1b843ef8e4',
     type: 'appointment.status_changed',
     aggregateId: 'dabea031-504f-43b6-86d0-8c1b843ef8e4',
@@ -19,19 +19,21 @@ describe('AutomationEventDispatcher', () => {
     global.fetch = originalFetch;
   });
 
-  it('assina evento persistido e confirma a entrega após HTTP 2xx', async () => {
-    const update = jest.fn().mockResolvedValue({});
-    const prisma = {
-      automationEventModel: {
-        findMany: jest.fn().mockResolvedValue([event]),
-        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-        update,
-        findUnique: jest.fn().mockResolvedValue(event),
-      },
-    } as unknown as PrismaService;
+  const buildRepository = (): IAutomationEventRepository => ({
+    findById: jest.fn().mockResolvedValue(new AutomationEvent(pending)),
+    findDue: jest.fn().mockResolvedValue([pending]),
+    claim: jest.fn().mockResolvedValue(true),
+    markDelivered: jest.fn().mockResolvedValue(undefined),
+    markFailed: jest.fn().mockResolvedValue(undefined),
+  });
+
+  it('assina evento, confirma entrega após HTTP 2xx e a assinatura é verificável', async () => {
+    const repository = buildRepository();
     const fetchMock = jest.fn().mockResolvedValue({ ok: true });
     global.fetch = fetchMock as unknown as typeof fetch;
-    const dispatcher = new AutomationEventDispatcher(prisma) as unknown as {
+    const dispatcher = new AutomationEventDispatcher(
+      repository,
+    ) as unknown as {
       dispatchDue(url: string, secret: string): Promise<void>;
     };
 
@@ -40,57 +42,45 @@ describe('AutomationEventDispatcher', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const init = fetchMock.mock.calls[0][1] as RequestInit;
     const headers = init.headers as Record<string, string>;
-    expect(headers['x-lari-event-id']).toBe(event.id);
-    const verifier = new VerifyAutomationEventUseCase(prisma);
+    expect(headers['x-lari-event-id']).toBe(pending.id);
+    expect(repository.markDelivered).toHaveBeenCalledWith(pending.id);
+
     process.env.AUTOMATION_EVENT_WEBHOOK_SECRET = secret;
     try {
+      const verifier = new VerifyAutomationEventUseCase(repository);
       await expect(
         verifier.execute(
-          event.id,
+          pending.id,
           headers['x-lari-timestamp'],
           headers['x-lari-signature'],
         ),
-      ).resolves.toMatchObject({ event: { id: event.id } });
+      ).resolves.toMatchObject({ event: { id: pending.id } });
     } finally {
       delete process.env.AUTOMATION_EVENT_WEBHOOK_SECRET;
     }
-    expect(update).toHaveBeenCalledWith({
-      where: { id: event.id },
-      data: {
-        deliveredAt: expect.any(Date),
-        lockedUntil: null,
-        lastError: null,
-      },
-    });
   });
 
   it('mantém o evento para nova tentativa após falha HTTP', async () => {
-    const update = jest.fn().mockResolvedValue({});
-    const prisma = {
-      automationEventModel: {
-        findMany: jest.fn().mockResolvedValue([event]),
-        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-        update,
-      },
-    } as unknown as PrismaService;
+    const repository = buildRepository();
     global.fetch = jest
       .fn()
       .mockResolvedValue({ ok: false, status: 503 }) as unknown as typeof fetch;
-    const dispatcher = new AutomationEventDispatcher(prisma) as unknown as {
+    const dispatcher = new AutomationEventDispatcher(
+      repository,
+    ) as unknown as {
       dispatchDue(url: string, secret: string): Promise<void>;
     };
 
     await dispatcher.dispatchDue('http://n8n:5678/webhook/test', secret);
 
-    const call = update.mock.calls[0][0] as {
-      data: {
-        attempts: { increment: number };
-        nextAttemptAt: Date;
-        deliveredAt?: Date;
-      };
-    };
-    expect(call.data.attempts.increment).toBe(1);
-    expect(call.data.nextAttemptAt.getTime()).toBeGreaterThan(Date.now());
-    expect(call.data.deliveredAt).toBeUndefined();
+    expect(repository.markFailed).toHaveBeenCalledTimes(1);
+    const call = (repository.markFailed as jest.Mock).mock.calls[0] as [
+      string,
+      Date,
+      string,
+    ];
+    expect(call[0]).toBe(pending.id);
+    expect(call[1].getTime()).toBeGreaterThan(Date.now());
+    expect(repository.markDelivered).not.toHaveBeenCalled();
   });
 });

@@ -13,6 +13,7 @@ import { FindAvailabilityUseCase } from '../../agenda/application/find-availabil
 import { AvailabilityQueryDto } from '../../agenda/presentation/dtos/agenda-block.dto';
 import { AppointmentUseCase } from '../../appointments/application/appointment.usecase';
 import { AppointmentDomainFilter } from '../../appointments/presentation/filters/appointment.domain.filter';
+import { AutomationDomainFilter } from './filters/automation-event.domain.filter';
 import { AppointmentPresenter } from '../../appointments/presentation/presenters/appointment.presenter';
 import { FindClientUseCase } from '../../clients/application/find.client.usecase';
 import { ResolveAutomationClientUseCase } from '../../clients/application/resolve-automation-client.usecase';
@@ -29,7 +30,7 @@ import { VerifyAutomationEventUseCase } from '../application/verify-automation-e
 
 @Automation()
 @Controller('automation')
-@UseFilters(AppointmentDomainFilter)
+@UseFilters(AppointmentDomainFilter, AutomationDomainFilter)
 export class AutomationController {
   constructor(
     private readonly services: FindAllCatalogItemUseCase,
